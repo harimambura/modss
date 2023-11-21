@@ -2,12 +2,17 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 
 (function () {
 	'use strict';
-
-	var version_modss = '3.0', API = Lampa.Utils.protocol() + 'api.lampa.stream/', type = '', jackets = {}, cards, ping_auth, manifest, menu_list = [], vip = false, user_id = '', uid = '3cd26a8132842c8ee74bfe73d0ff3bbb', IP, logged = false;
-
+	
+	var Protocol = function Protocol() {
+		return window.location.protocol == 'https:' ? 'https://' : 'http://';
+	}
+	var TRASH_R = ['$$$####!!!!!!!', '^^^^^^##@', '@!^^!@#@@$$$$$', '^^#@@!!@#!$', '@#!@@@##$$@@'];
+	var version_modss = '3.0', API = 'https://api.lampa.stream/', type = '', jackets = {}, cards, ping_auth, manifest, menu_list = [], vip = false, leftVipD = '', user_id = '', uid = '3cd26a8132842c8ee74bfe73d0ff3bbb', IP, logged = false;
+	console.log('App', 'protocol:', Protocol());
+	
 	var Modss = {
 		init: function () {
-
+      
 			this.collections();
 			this.sources();
 			this.buttBack();
@@ -20,7 +25,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           $('.extensions__item-author', Lampa.Extensions.render()).map(function (i, e){
             if(e.textContent == '@modss_group') $(e).html('💎').append('<span class="extensions__item-premium">VIP buy at @modssmy_bot</span>');
           });
-        }, 200);
+        }, 500);
       });
       if (Lampa.Storage.field('mods_tv_butt_ch')) Lampa.Keypad.listener.follow('keydown', function (e) {
     		var next = (e.code == 427 || e.code == 33 || e.code == 39);
@@ -41,19 +46,11 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     	if (!window.FX) {
   			window.FX = {
   				max_qualitie: 480,
-  				is_max_qualitie: false,
+  				is_max_qualitie: false, 
   				auth: false
   			};
   		}
-  		if(!IP) {
-  		  $.ajax({
-          url: 'https://api.ipify.org/?format=json',
-          type:'get',
-          dataType:'json'
-        }).done(function(data) {
-          IP = data.ip;
-        });
-  		}
+  		if(!IP) this.getIp();
   		var ads_4k = ['<div style="padding: 1.5em 2em; padding-top: 0;">', '<div style="background: #3e3e3e; padding: 1em; border-radius: 0.3em;">', '<div style="line-height: 1.4;">Надоело смотреть в плохом качестве?<br>Хочешь смотреть в FHD и 4K? Переходи в телеграм бот <span style="color: #24b4f9">@modssmy_bot</span> для подключения VIP</div>', '</div>', '</div>'].join('');
     	Lampa.Controller.listener.follow('toggle', function(e) {
     		if(e.name == 'select' && !vip) {
@@ -66,6 +63,10 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     	});
     	var mynotice = new Lampa.NoticeClassLampa({name: 'Modss',db_name: 'notice_modss'});
       Lampa.Notice.addClass('modss', mynotice);
+      if(Lampa.Storage.get('showModssVip', false) && leftVipD && vip && logged) setTimeout(function (){
+        Modss.showModssVip();
+        Lampa.Storage.set('showModssVip', false);
+      }, 2000);
 		},
 		snow: function () {
 		  $(document).snowfall(Lampa.Storage.field('mods_snow') == true ? {
@@ -91,7 +92,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 			if (Lampa.Storage.get('mods_radio')) $('body').find('.menu .menu__list').eq(0).append(menu_item);
 			else $('body').find('[data-action="Radio_n"]').remove();
 		},
-
+		
     sources: function () {
 			var sources;
 			if (Lampa.Params.values && Lampa.Params.values['source']) {
@@ -109,10 +110,27 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 
       Lampa.Params.select('source', sources, 'tmdb');
 		},
+		showModssVip: function () {
+      var enabled = Lampa.Controller.enabled().name;
+      Lampa.Modal.open({
+        title: '',
+        html: Lampa.Template.get('cub_premium'),
+        onBack: function onBack() {
+          Lampa.Modal.close();
+          Lampa.Controller.toggle(enabled);
+        }
+      });
+      Lampa.Modal.render().find('.cub-premium__title').text("MODS's VIP");
+      Lampa.Modal.render().find('.cub-premium__descr:eq(0)').text('Поздравляем вас с получением VIP-статуса! Теперь у вас есть возможность наслаждаться видео в высоком разрешении 4К. Кроме того, вас ожидают дополнительные балансеры, которые помогут найти подходящий контент');
+      Lampa.Modal.render().find('.cub-premium__descr:eq(1)').text('У вас осталось ' + leftVipD);
+      Lampa.Modal.render().find('.cub-premium__descr:eq(1)').after('👇 Кнопка для просмотра 👇<br><br><img src="https://lampa.stream/but_modss.jpg">');
+      Lampa.Modal.render().find('.cub-premium__url').text('@modssmy_bot');
+      Lampa.Modal.render().addClass('modal--cub-premium').find('.modal__content').before('<div class="modal__icon"><svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 32 32"><path d="m2.837 20.977q-.912-5.931-1.825-11.862a.99.99 0 0 1 1.572-.942l5.686 4.264a1.358 1.358 0 0 0 1.945-.333l4.734-7.104a1.263 1.263 0 0 1 2.1 0l4.734 7.1a1.358 1.358 0 0 0 1.945.333l5.686-4.264a.99.99 0 0 1 1.572.942q-.913 5.931-1.825 11.862z" fill="#D8C39A"></svg></div>');
+    },
 		online: function (back) {
 		  var params = {
       	url: '',
-      	title: Lampa.Lang.translate('modss_title_online') + " MODS's ",
+      	title: Lampa.Lang.translate('modss_title_online') + " MODS's " + leftVipD,
       	component: 'modss_online',
       	search: cards.title,
       	search_one: cards.title,
@@ -131,7 +149,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 		  }
 			function openOnline(){
         Lampa.Activity.push(params);
-			}
+			} 
 			function shows(last) {
   		  Lampa.Select.show({
           title: Lampa.Lang.translate('title_action'),
@@ -149,7 +167,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             if (a.yes) {
               _this.data[card.id].continued = true;
 		          Lampa.Storage.set('online_choice_' + _this.balanser[card.id], _this.data);
-            }
+            } 
             openOnline();
           }
         });
@@ -160,32 +178,32 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 		  var is_continue = this.is_continue;
 		  var last_s = this.last_s;
 		  inf();
-
+		  
 			var loader = '<svg class="modss-balanser-loader" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="margin: auto; background: none; display: block; shape-rendering: auto;" width="94px" height="94px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><circle cx="50" cy="50" fill="none" stroke="#ffffff" stroke-width="5" r="35" stroke-dasharray="164.93361431346415 56.97787143782138"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" values="0 50 50;360 50 50" keyTimes="0;1"></animateTransform></circle></svg>';
 			var ico = '<svg class="modss-online-icon" viewBox="0 0 32 32" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 32 32"><path d="m17 14.5 4.2-4.5L4.9 1.2c-.1-.1-.3-.1-.6-.2L17 14.5zM23 21l5.9-3.2c.7-.4 1.1-1 1.1-1.8s-.4-1.5-1.1-1.8L23 11l-4.7 5 4.7 5zM2.4 1.9c-.3.3-.4.7-.4 1.1v26c0 .4.1.8.4 1.2L15.6 16 2.4 1.9zM17 17.5 4.3 31c.2 0 .4-.1.6-.2L21.2 22 17 17.5z" fill="currentColor" fill="#ffffff" class="fill-000000"></path></svg>';
 			var button = "<div data-subtitle='modss_v".concat(manifest.version, " (14 Balansers, 7 in vip)' class='full-start__button selector view--modss_online'>" +ico + "<span>"+this.title+"</span></div>");
       var btn = $(Lampa.Lang.translate(button));
 			this.btn = btn;
 		//	if (Lampa.Storage.field('online_but_first')) Lampa.Storage.set('full_btn_priority', Lampa.Utils.hash(btn.clone().removeClass('focus').prop('outerHTML')));
-
+			
 			if(back == 'delete') Lampa.Activity.active().activity.render().find('.view--modss_online').remove();
 			if(back && back !== 'delete') back.find('span').text(Lampa.Lang.translate(this.title));
 		  if (!back && Lampa.Storage.field('mods_onl')) {
 		    setTimeout(function (){
 		      if(Lampa.Controller.enabled().name == 'full_start' && !Lampa.Activity.active().activity.render().find('.view--modss_online').length) {
     		    if(Lampa.Activity.active().activity.render().find('.button--priority').length){
-    		      Lampa.Activity.active().activity.render().find('.full-start-new__buttons').prepend(btn);
+    		      Lampa.Activity.active().activity.render().find('.full-start-new__buttons').prepend(btn);	
     		      Lampa.Controller.toggle('full_start');
     		      Navigator.focus(btn[0]);
     		    } else if((Lampa.Storage.field('online_but_first') && Lampa.Activity.active().activity.render().find('.button--play').length) || !Lampa.Activity.active().activity.render().find('.view--torrent').length){
-    		      Lampa.Activity.active().activity.render().find('.button--play').before(btn);
+    		      Lampa.Activity.active().activity.render().find('.button--play').before(btn);		
     		      Lampa.Controller.toggle('full_start');
     		      Navigator.focus(btn[0]);
   		      } else {
-    		      Lampa.Activity.active().activity.render().find('.view--torrent').before(btn);
+    		      Lampa.Activity.active().activity.render().find('.view--torrent').before(btn);		
     		      Lampa.Controller.toggle('full_start');
-      		  }
-    		  }
+      		  } 
+    		  } 
     		  //if(Lampa.Storage.field('online_but_first')) Navigator.focus(btn[0]);
 		    }, 100);
         btn.unbind('hover:enter hover.click').on('hover:enter hover.click', function () {
@@ -196,8 +214,8 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   			});
 		  }
 		},
-
-
+		
+		
 		collections: function () {
 			var menu_item = $('<li class="menu__item selector" data-action="collection"><div class="menu__ico"><img src="./img/icons/menu/catalog.svg"/></div><div class="menu__text">' + Lampa.Lang.translate('title_collections') + '</div></li>');
 			if (Lampa.Storage.get('mods_collection')) $('body').find('.menu .menu__list li:eq(3)').after(menu_item)
@@ -210,7 +228,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					source: 'filmix'
 				}, {*/
 						title: Lampa.Lang.translate('menu_collections') + ' ' + Lampa.Lang.translate('title_on_the') + ' rezka',
-						url: Lampa.Utils.protocol() +'hdrezka.co/collections/',
+						url: Protocol() +'hdrezka.co/collections/',
 						source: 'rezka'
 				}, {
 						title: Lampa.Lang.translate('menu_collections') + ' ' + Lampa.Lang.translate('title_on_the') + ' kinopub',
@@ -245,6 +263,16 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 				});
 			});
 		},
+		getIp: function () {
+		  $.ajax({
+		    url: Protocol() + 'api.bigdatacloud.net/data/client-ip',
+        //url: 'https://api.ipify.org/?format=json',
+        type:'get',
+        dataType:'json'
+      }).done(function(data) {
+        IP = data.ipString;
+      });
+		},
 		Timer: function (tpl) {
       var self = this;
       self.tpl = tpl;
@@ -252,7 +280,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       self.paused = true;
       self.msElapsed = 0;
       self.intervalId = null;
-
+    
       self.start = function() {
         self.paused = false;
         self.startTime = Date.now();
@@ -326,7 +354,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 				 	return eps.season_number == last_seria_inseason;
 				}).episode_count;
 				if(!API || !API.length) window.location.reload();
-
+				
 				if (card.next_episode_to_air) {
 					var add_ = '<b>' + last_seria;
 					var notices = Lampa.Storage.get('account_notice', []).filter(function (n) {
@@ -336,16 +364,16 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 						var notice = notices.find(function (itm) {
 						  return itm.episode == last_seria;
 						});
-
+						
 						if (notice) {
   						var episod_new = JSON.parse(notice.data).card.seasons;
-  						if (Lampa.Utils.parseTime(notice.date).full == Lampa.Utils.parseTime(Date.now()).full)
+  						if (Lampa.Utils.parseTime(notice.date).full == Lampa.Utils.parseTime(Date.now()).full) 
   						add_ = '#{season_new} <b>' + episod_new[last_seria_inseason];
-  					}
+  					} 
 					}
 					new_ser = add_ + '</b> #{torrent_serial_episode} #{season_from} ' + count_eps_last_seas + ' - S' + last_seria_inseason;
 				} else new_ser = last_seria_inseason + ' #{season_ended}';
-
+		
 				if(!$('.card--new_seria', Lampa.Activity.active().activity.render()).length) {
   				if(window.innerWidth > 585) $('.full-start__poster,.full-start-new__poster', Lampa.Activity.active().activity.render()).append("<div class='card--new_seria' style='right: -0.6em;position: absolute;background: #168FDF;color: #fff;bottom:.6em;padding: 0.4em 0.4em;font-size: 1.2em;-webkit-border-radius: 0.3em;-moz-border-radius: 0.3em;border-radius: 0.3em;'>" + Lampa.Lang.translate(new_ser) + "</div>");
   			  else {
@@ -354,12 +382,12 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   			  }
   		  }
 			}
-		},
+		}, 
 	  rating_kp_imdb:function (card) {
 			return new Promise(function (resolve, reject) {
   			var relise = (card.number_of_seasons ? card.first_air_date : card.release_date) || '0000';
   			var year = parseInt((relise + '').slice(0, 4));
-    	//	if (Lampa.Storage.field('mods_rating') && $('.rate--kp', Lampa.Activity.active().activity.render()).hasClass('hide') && !$('.wait_rating', Lampa.Activity.active().activity.render()).length)
+    	//	if (Lampa.Storage.field('mods_rating') && $('.rate--kp', Lampa.Activity.active().activity.render()).hasClass('hide') && !$('.wait_rating', Lampa.Activity.active().activity.render()).length) 
   		  if (['filmix', 'pub'].indexOf(card.source) == -1 && Lampa.Storage.field('mods_rating'))
   		  if(!API || !API.length) window.location.reload();
   		  $('.info__rate', Lampa.Activity.active().activity.render()).after('<div style="width:2em;margin-top:1em;margin-right:1em" class="wait_rating"><div class="broadcast__scan"><div></div></div><div>');
@@ -370,7 +398,10 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   				var kp = json.data && json.data.kp_rating || 0;
   				var imdb = json.data && json.data.imdb_rating || 0;
   				var auth = json.data.auth;
-  				if (logged !== auth) {
+  				vip = json.data.vip;
+  				if(json.data.leftDays) leftVipD = json.data.leftDays;
+  				if(!vip) Lampa.Storage.set('showModssVip', true);
+          if (logged !== auth) {
   				  logged = auth;
   				  window.location.reload();
   				}
@@ -380,21 +411,21 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   					$('.wait_rating',Lampa.Activity.active().activity.render()).remove();
   					$('.rate--imdb', Lampa.Activity.active().activity.render()).removeClass('hide').find('> div').eq(0).text(imdb_rating);
   					$('.rate--kp', Lampa.Activity.active().activity.render()).removeClass('hide').find('> div').eq(0).text(kp_rating);
-  				}
+  				} 
   				resolve();
   			}, function (a, c) {
   				resolve();
   				Lampa.Noty.show('MODSs ОШИБКА Рейтинг KP   ' + Pub.network.errorDecode(a, c));
   			}, {
-  			  title:card.title,
-  			  year: year,
-  			  card_id:card.id,
+  			  title:card.title, 
+  			  year: year, 
+  			  card_id:card.id, 
   			  imdb: card.imdb_id,
-  			  user_id: user_id,
+  			  user_id: user_id, 
   			  uid: uid
   			});
 			});
-		},
+		}, 
 		Notice: function (data) {
 		  var id = data.id;
       var card = JSON.parse(data.data).card;
@@ -402,7 +433,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         if(Lampa.Notice.classes.modss.notices.find(function (n) {
           return n.id == id;
         })) return;
-
+        
         var bals = [];
         for (var b in data.find){
           bals.push('<b>'+b+'</b> - '+data.find[b].join(', '));
@@ -412,7 +443,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           from: 'modss',
           title: card.name,
           text: 'Переводы на балансерах где есть '+data.episode+' серия',
-          time: Date.now(),
+          time: Date.now(), 
           poster: card.poster_path,
           card: card,
           labels: bals
@@ -422,7 +453,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           console.log('Чет пошло не так',e);
         });
       }, 1000);
-
+      
       Lampa.Notice.listener.follow('select',function (e) {
         if(e.element.from == 'modss'){
           Lampa.Notice.close();
@@ -430,7 +461,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       });
 		},
 		balansers: function() {
-		  var balansers = {"videocdn":"VideoCDN","collaps":"Collaps","kinobase":"Kinobase","filmix":"Filmix","cdnmovies":"CDNmovies","rezka":"Rezka","pub":"Pub <img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSI+PC9wYXRoPjxwYXRoIGQ9Ik0yIDE5aDIwdjJIMnYtMnptOS0xMWgydjhoLTJWOHpNNy45NjUgOGgyLjEyNWwtMi45ODYgNy45NjRoLTJMMi4xMTggOGgyLjEyNWwxLjg2MSA1LjExM0w3Ljk2NSA4ek0xNyAxNHYyaC0yVjhoNGEzIDMgMCAwIDEgMCA2aC0yem0wLTR2MmgyYTEgMSAwIDAgMCAwLTJoLTJ6TTIgM2gyMHYySDJWM3oiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvc3ZnPg==\" /><img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTEyIDUxMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBkYXRhLW5hbWU9IjRLIj48cGF0aCBkPSJNNDYxLjEzNyAxMjYuMDlhOCA4IDAgMCAwLTkuNDIzLTcuODcybC0xNy42NjcgMy4xOTJBMTAwNC4wOSAxMDA0LjA5IDAgMCAxIDI1NiAxMzcuMzY1IDEwMDQuMTE0IDEwMDQuMTE0IDAgMCAxIDc3Ljk1MiAxMjEuNDFsLTE3LjY2Ny0zLjE5MmE3Ljk5OSA3Ljk5OSAwIDAgMC05LjQyMiA3Ljg3MnYyNTkuODJhNy45OTkgNy45OTkgMCAwIDAgOS40MjIgNy44NzNsMTcuNjY3LTMuMTkzYTEwMDEuNDIzIDEwMDEuNDIzIDAgMCAxIDM1Ni4wOTYgMGwxNy42NjcgMy4xOTNhOCA4IDAgMCAwIDkuNDIzLTcuODcyWm0tMzEgMjcuNDgzdjIwNC44NTRhMTAyOC41OTQgMTAyOC41OTQgMCAwIDAtMzQ4LjI3NCAwVjE1My41NzNhMTAyOC41MzggMTAyOC41MzggMCAwIDAgMzQ4LjI3NSAwWiIgZmlsbD0iI2ZmZmZmZiIgY2xhc3M9ImZpbGwtMDAwMDAwIj48L3BhdGg+PHBhdGggZD0iTTIzNS40MTMgMjY0LjE5NXYtMjQuOTU2YTggOCAwIDAgMC0xNiAwdjI0Ljk1NkgxODQuNTFsMzcuNzQ2LTUzLjI4OGE4IDggMCAwIDAtMTMuMDU2LTkuMjQ4bC00Ni42ODggNjUuOTEyYTggOCAwIDAgMCA2LjUyOCAxMi42MjRoNTAuMzcydjI1LjUyM2E4IDggMCAwIDAgMTYgMHYtMjUuNTIzaDE4Ljc2NWE4IDggMCAxIDAgMC0xNlpNMjg1LjQ3IDMxMy43MTdhOCA4IDAgMCAwIDgtOHYtMzUuNDI2bDEzLjI0NS0xMi43MDQgMzQuMTYyIDUwLjQ3YTggOCAwIDAgMCAxMy4yNS04Ljk2OWwtMzUuNjk2LTUyLjczNyAzNC42MDgtMzMuMTkzYTggOCAwIDEgMC0xMS4wNzQtMTEuNTQ3bC00OC40OTUgNDYuNTEydi00MS44NGE4IDggMCAwIDAtMTYgMHY5OS40MzRhOCA4IDAgMCAwIDggOFoiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvZz48L3N2Zz4=\" />","hdr":"HDR MODS's <img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSI+PC9wYXRoPjxwYXRoIGQ9Ik0yIDE5aDIwdjJIMnYtMnptOS0xMWgydjhoLTJWOHpNNy45NjUgOGgyLjEyNWwtMi45ODYgNy45NjRoLTJMMi4xMTggOGgyLjEyNWwxLjg2MSA1LjExM0w3Ljk2NSA4ek0xNyAxNHYyaC0yVjhoNGEzIDMgMCAwIDEgMCA2aC0yem0wLTR2MmgyYTEgMSAwIDAgMCAwLTJoLTJ6TTIgM2gyMHYySDJWM3oiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvc3ZnPg==\" /><img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTEyIDUxMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBkYXRhLW5hbWU9IjRLIj48cGF0aCBkPSJNNDYxLjEzNyAxMjYuMDlhOCA4IDAgMCAwLTkuNDIzLTcuODcybC0xNy42NjcgMy4xOTJBMTAwNC4wOSAxMDA0LjA5IDAgMCAxIDI1NiAxMzcuMzY1IDEwMDQuMTE0IDEwMDQuMTE0IDAgMCAxIDc3Ljk1MiAxMjEuNDFsLTE3LjY2Ny0zLjE5MmE3Ljk5OSA3Ljk5OSAwIDAgMC05LjQyMiA3Ljg3MnYyNTkuODJhNy45OTkgNy45OTkgMCAwIDAgOS40MjIgNy44NzNsMTcuNjY3LTMuMTkzYTEwMDEuNDIzIDEwMDEuNDIzIDAgMCAxIDM1Ni4wOTYgMGwxNy42NjcgMy4xOTNhOCA4IDAgMCAwIDkuNDIzLTcuODcyWm0tMzEgMjcuNDgzdjIwNC44NTRhMTAyOC41OTQgMTAyOC41OTQgMCAwIDAtMzQ4LjI3NCAwVjE1My41NzNhMTAyOC41MzggMTAyOC41MzggMCAwIDAgMzQ4LjI3NSAwWiIgZmlsbD0iI2ZmZmZmZiIgY2xhc3M9ImZpbGwtMDAwMDAwIj48L3BhdGg+PHBhdGggZD0iTTIzNS40MTMgMjY0LjE5NXYtMjQuOTU2YTggOCAwIDAgMC0xNiAwdjI0Ljk1NkgxODQuNTFsMzcuNzQ2LTUzLjI4OGE4IDggMCAwIDAtMTMuMDU2LTkuMjQ4bC00Ni42ODggNjUuOTEyYTggOCAwIDAgMCA2LjUyOCAxMi42MjRoNTAuMzcydjI1LjUyM2E4IDggMCAwIDAgMTYgMHYtMjUuNTIzaDE4Ljc2NWE4IDggMCAxIDAgMC0xNlpNMjg1LjQ3IDMxMy43MTdhOCA4IDAgMCAwIDgtOHYtMzUuNDI2bDEzLjI0NS0xMi43MDQgMzQuMTYyIDUwLjQ3YTggOCAwIDAgMCAxMy4yNS04Ljk2OWwtMzUuNjk2LTUyLjczNyAzNC42MDgtMzMuMTkzYTggOCAwIDEgMC0xMS4wNzQtMTEuNTQ3bC00OC40OTUgNDYuNTEydi00MS44NGE4IDggMCAwIDAtMTYgMHY5OS40MzRhOCA4IDAgMCAwIDggOFoiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvZz48L3N2Zz4=\" />","hdrezka":"HDRezka <img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSI+PC9wYXRoPjxwYXRoIGQ9Ik0yIDE5aDIwdjJIMnYtMnptOS0xMWgydjhoLTJWOHpNNy45NjUgOGgyLjEyNWwtMi45ODYgNy45NjRoLTJMMi4xMTggOGgyLjEyNWwxLjg2MSA1LjExM0w3Ljk2NSA4ek0xNyAxNHYyaC0yVjhoNGEzIDMgMCAwIDEgMCA2aC0yem0wLTR2MmgyYTEgMSAwIDAgMCAwLTJoLTJ6TTIgM2gyMHYySDJWM3oiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvc3ZnPg==\" /><img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTEyIDUxMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBkYXRhLW5hbWU9IjRLIj48cGF0aCBkPSJNNDYxLjEzNyAxMjYuMDlhOCA4IDAgMCAwLTkuNDIzLTcuODcybC0xNy42NjcgMy4xOTJBMTAwNC4wOSAxMDA0LjA5IDAgMCAxIDI1NiAxMzcuMzY1IDEwMDQuMTE0IDEwMDQuMTE0IDAgMCAxIDc3Ljk1MiAxMjEuNDFsLTE3LjY2Ny0zLjE5MmE3Ljk5OSA3Ljk5OSAwIDAgMC05LjQyMiA3Ljg3MnYyNTkuODJhNy45OTkgNy45OTkgMCAwIDAgOS40MjIgNy44NzNsMTcuNjY3LTMuMTkzYTEwMDEuNDIzIDEwMDEuNDIzIDAgMCAxIDM1Ni4wOTYgMGwxNy42NjcgMy4xOTNhOCA4IDAgMCAwIDkuNDIzLTcuODcyWm0tMzEgMjcuNDgzdjIwNC44NTRhMTAyOC41OTQgMTAyOC41OTQgMCAwIDAtMzQ4LjI3NCAwVjE1My41NzNhMTAyOC41MzggMTAyOC41MzggMCAwIDAgMzQ4LjI3NSAwWiIgZmlsbD0iI2ZmZmZmZiIgY2xhc3M9ImZpbGwtMDAwMDAwIj48L3BhdGg+PHBhdGggZD0iTTIzNS40MTMgMjY0LjE5NXYtMjQuOTU2YTggOCAwIDAgMC0xNiAwdjI0Ljk1NkgxODQuNTFsMzcuNzQ2LTUzLjI4OGE4IDggMCAwIDAtMTMuMDU2LTkuMjQ4bC00Ni42ODggNjUuOTEyYTggOCAwIDAgMCA2LjUyOCAxMi42MjRoNTAuMzcydjI1LjUyM2E4IDggMCAwIDAgMTYgMHYtMjUuNTIzaDE4Ljc2NWE4IDggMCAxIDAgMC0xNlpNMjg1LjQ3IDMxMy43MTdhOCA4IDAgMCAwIDgtOHYtMzUuNDI2bDEzLjI0NS0xMi43MDQgMzQuMTYyIDUwLjQ3YTggOCAwIDAgMCAxMy4yNS04Ljk2OWwtMzUuNjk2LTUyLjczNyAzNC42MDgtMzMuMTkzYTggOCAwIDEgMC0xMS4wNzQtMTEuNTQ3bC00OC40OTUgNDYuNTEydi00MS44NGE4IDggMCAwIDAtMTYgMHY5OS40MzRhOCA4IDAgMCAwIDggOFoiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvZz48L3N2Zz4=\" />","bazon":"Bazon <img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSI+PC9wYXRoPjxwYXRoIGQ9Ik0yIDE5aDIwdjJIMnYtMnptOS0xMWgydjhoLTJWOHpNNy45NjUgOGgyLjEyNWwtMi45ODYgNy45NjRoLTJMMi4xMTggOGgyLjEyNWwxLjg2MSA1LjExM0w3Ljk2NSA4ek0xNyAxNHYyaC0yVjhoNGEzIDMgMCAwIDEgMCA2aC0yem0wLTR2MmgyYTEgMSAwIDAgMCAwLTJoLTJ6TTIgM2gyMHYySDJWM3oiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvc3ZnPg==\" /><img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTEyIDUxMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBkYXRhLW5hbWU9IjRLIj48cGF0aCBkPSJNNDYxLjEzNyAxMjYuMDlhOCA4IDAgMCAwLTkuNDIzLTcuODcybC0xNy42NjcgMy4xOTJBMTAwNC4wOSAxMDA0LjA5IDAgMCAxIDI1NiAxMzcuMzY1IDEwMDQuMTE0IDEwMDQuMTE0IDAgMCAxIDc3Ljk1MiAxMjEuNDFsLTE3LjY2Ny0zLjE5MmE3Ljk5OSA3Ljk5OSAwIDAgMC05LjQyMiA3Ljg3MnYyNTkuODJhNy45OTkgNy45OTkgMCAwIDAgOS40MjIgNy44NzNsMTcuNjY3LTMuMTkzYTEwMDEuNDIzIDEwMDEuNDIzIDAgMCAxIDM1Ni4wOTYgMGwxNy42NjcgMy4xOTNhOCA4IDAgMCAwIDkuNDIzLTcuODcyWm0tMzEgMjcuNDgzdjIwNC44NTRhMTAyOC41OTQgMTAyOC41OTQgMCAwIDAtMzQ4LjI3NCAwVjE1My41NzNhMTAyOC41MzggMTAyOC41MzggMCAwIDAgMzQ4LjI3NSAwWiIgZmlsbD0iI2ZmZmZmZiIgY2xhc3M9ImZpbGwtMDAwMDAwIj48L3BhdGg+PHBhdGggZD0iTTIzNS40MTMgMjY0LjE5NXYtMjQuOTU2YTggOCAwIDAgMC0xNiAwdjI0Ljk1NkgxODQuNTFsMzcuNzQ2LTUzLjI4OGE4IDggMCAwIDAtMTMuMDU2LTkuMjQ4bC00Ni42ODggNjUuOTEyYTggOCAwIDAgMCA2LjUyOCAxMi42MjRoNTAuMzcydjI1LjUyM2E4IDggMCAwIDAgMTYgMHYtMjUuNTIzaDE4Ljc2NWE4IDggMCAxIDAgMC0xNlpNMjg1LjQ3IDMxMy43MTdhOCA4IDAgMCAwIDgtOHYtMzUuNDI2bDEzLjI0NS0xMi43MDQgMzQuMTYyIDUwLjQ3YTggOCAwIDAgMCAxMy4yNS04Ljk2OWwtMzUuNjk2LTUyLjczNyAzNC42MDgtMzMuMTkzYTggOCAwIDEgMC0xMS4wNzQtMTEuNTQ3bC00OC40OTUgNDYuNTEydi00MS44NGE4IDggMCAwIDAtMTYgMHY5OS40MzRhOCA4IDAgMCAwIDggOFoiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvZz48L3N2Zz4=\" />","qiwi":"VBMovies <img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSI+PC9wYXRoPjxwYXRoIGQ9Ik0yIDE5aDIwdjJIMnYtMnptOS0xMWgydjhoLTJWOHpNNy45NjUgOGgyLjEyNWwtMi45ODYgNy45NjRoLTJMMi4xMTggOGgyLjEyNWwxLjg2MSA1LjExM0w3Ljk2NSA4ek0xNyAxNHYyaC0yVjhoNGEzIDMgMCAwIDEgMCA2aC0yem0wLTR2MmgyYTEgMSAwIDAgMCAwLTJoLTJ6TTIgM2gyMHYySDJWM3oiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvc3ZnPg==\" /><img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNTEyIDUxMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBkYXRhLW5hbWU9IjRLIj48cGF0aCBkPSJNNDYxLjEzNyAxMjYuMDlhOCA4IDAgMCAwLTkuNDIzLTcuODcybC0xNy42NjcgMy4xOTJBMTAwNC4wOSAxMDA0LjA5IDAgMCAxIDI1NiAxMzcuMzY1IDEwMDQuMTE0IDEwMDQuMTE0IDAgMCAxIDc3Ljk1MiAxMjEuNDFsLTE3LjY2Ny0zLjE5MmE3Ljk5OSA3Ljk5OSAwIDAgMC05LjQyMiA3Ljg3MnYyNTkuODJhNy45OTkgNy45OTkgMCAwIDAgOS40MjIgNy44NzNsMTcuNjY3LTMuMTkzYTEwMDEuNDIzIDEwMDEuNDIzIDAgMCAxIDM1Ni4wOTYgMGwxNy42NjcgMy4xOTNhOCA4IDAgMCAwIDkuNDIzLTcuODcyWm0tMzEgMjcuNDgzdjIwNC44NTRhMTAyOC41OTQgMTAyOC41OTQgMCAwIDAtMzQ4LjI3NCAwVjE1My41NzNhMTAyOC41MzggMTAyOC41MzggMCAwIDAgMzQ4LjI3NSAwWiIgZmlsbD0iI2ZmZmZmZiIgY2xhc3M9ImZpbGwtMDAwMDAwIj48L3BhdGg+PHBhdGggZD0iTTIzNS40MTMgMjY0LjE5NXYtMjQuOTU2YTggOCAwIDAgMC0xNiAwdjI0Ljk1NkgxODQuNTFsMzcuNzQ2LTUzLjI4OGE4IDggMCAwIDAtMTMuMDU2LTkuMjQ4bC00Ni42ODggNjUuOTEyYTggOCAwIDAgMCA2LjUyOCAxMi42MjRoNTAuMzcydjI1LjUyM2E4IDggMCAwIDAgMTYgMHYtMjUuNTIzaDE4Ljc2NWE4IDggMCAxIDAgMC0xNlpNMjg1LjQ3IDMxMy43MTdhOCA4IDAgMCAwIDgtOHYtMzUuNDI2bDEzLjI0NS0xMi43MDQgMzQuMTYyIDUwLjQ3YTggOCAwIDAgMCAxMy4yNS04Ljk2OWwtMzUuNjk2LTUyLjczNyAzNC42MDgtMzMuMTkzYTggOCAwIDEgMC0xMS4wNzQtMTEuNTQ3bC00OC40OTUgNDYuNTEydi00MS44NGE4IDggMCAwIDAtMTYgMHY5OS40MzRhOCA4IDAgMCAwIDggOFoiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvZz48L3N2Zz4=\" />","videodb":"VideoDB <img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSI+PC9wYXRoPjxwYXRoIGQ9Ik0yIDE5aDIwdjJIMnYtMnptOS0xMWgydjhoLTJWOHpNNy45NjUgOGgyLjEyNWwtMi45ODYgNy45NjRoLTJMMi4xMTggOGgyLjEyNWwxLjg2MSA1LjExM0w3Ljk2NSA4ek0xNyAxNHYyaC0yVjhoNGEzIDMgMCAwIDEgMCA2aC0yem0wLTR2MmgyYTEgMSAwIDAgMCAwLTJoLTJ6TTIgM2gyMHYySDJWM3oiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvc3ZnPg==\" />","zetflix":"Zetflix <img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSI+PC9wYXRoPjxwYXRoIGQ9Ik0yIDE5aDIwdjJIMnYtMnptOS0xMWgydjhoLTJWOHpNNy45NjUgOGgyLjEyNWwtMi45ODYgNy45NjRoLTJMMi4xMTggOGgyLjEyNWwxLjg2MSA1LjExM0w3Ljk2NSA4ek0xNyAxNHYyaC0yVjhoNGEzIDMgMCAwIDEgMCA2aC0yem0wLTR2MmgyYTEgMSAwIDAgMCAwLTJoLTJ6TTIgM2gyMHYySDJWM3oiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvc3ZnPg==\" />","uakino":"UAKino <img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSI+PC9wYXRoPjxwYXRoIGQ9Ik0yIDE5aDIwdjJIMnYtMnptOS0xMWgydjhoLTJWOHpNNy45NjUgOGgyLjEyNWwtMi45ODYgNy45NjRoLTJMMi4xMTggOGgyLjEyNWwxLjg2MSA1LjExM0w3Ljk2NSA4ek0xNyAxNHYyaC0yVjhoNGEzIDMgMCAwIDEgMCA2aC0yem0wLTR2MmgyYTEgMSAwIDAgMCAwLTJoLTJ6TTIgM2gyMHYySDJWM3oiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvc3ZnPg==\" />","eneida":"Eneida(Ukr) <img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSI+PC9wYXRoPjxwYXRoIGQ9Ik0yIDE5aDIwdjJIMnYtMnptOS0xMWgydjhoLTJWOHpNNy45NjUgOGgyLjEyNWwtMi45ODYgNy45NjRoLTJMMi4xMTggOGgyLjEyNWwxLjg2MSA1LjExM0w3Ljk2NSA4ek0xNyAxNHYyaC0yVjhoNGEzIDMgMCAwIDEgMCA2aC0yem0wLTR2MmgyYTEgMSAwIDAgMCAwLTJoLTJ6TTIgM2gyMHYySDJWM3oiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvc3ZnPg==\" />","kodik":"Kodik <img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSI+PC9wYXRoPjxwYXRoIGQ9Ik0yIDE5aDIwdjJIMnYtMnptOS0xMWgydjhoLTJWOHpNNy45NjUgOGgyLjEyNWwtMi45ODYgNy45NjRoLTJMMi4xMTggOGgyLjEyNWwxLjg2MSA1LjExM0w3Ljk2NSA4ek0xNyAxNHYyaC0yVjhoNGEzIDMgMCAwIDEgMCA2aC0yem0wLTR2MmgyYTEgMSAwIDAgMCAwLTJoLTJ6TTIgM2gyMHYySDJWM3oiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvc3ZnPg==\" />","anilibria":"Anilibria <img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSI+PC9wYXRoPjxwYXRoIGQ9Ik0yIDE5aDIwdjJIMnYtMnptOS0xMWgydjhoLTJWOHpNNy45NjUgOGgyLjEyNWwtMi45ODYgNy45NjRoLTJMMi4xMTggOGgyLjEyNWwxLjg2MSA1LjExM0w3Ljk2NSA4ek0xNyAxNHYyaC0yVjhoNGEzIDMgMCAwIDEgMCA2aC0yem0wLTR2MmgyYTEgMSAwIDAgMCAwLTJoLTJ6TTIgM2gyMHYySDJWM3oiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvc3ZnPg==\" />","hdvb":"HDVB <img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSI+PC9wYXRoPjxwYXRoIGQ9Ik0yIDE5aDIwdjJIMnYtMnptOS0xMWgydjhoLTJWOHpNNy45NjUgOGgyLjEyNWwtMi45ODYgNy45NjRoLTJMMi4xMTggOGgyLjEyNWwxLjg2MSA1LjExM0w3Ljk2NSA4ek0xNyAxNHYyaC0yVjhoNGEzIDMgMCAwIDEgMCA2aC0yem0wLTR2MmgyYTEgMSAwIDAgMCAwLTJoLTJ6TTIgM2gyMHYySDJWM3oiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvc3ZnPg==\" />","kinotochka":"KinoTochka <img style=\"width:2em!important;height:1.1em!important\" src=\"data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSI+PC9wYXRoPjxwYXRoIGQ9Ik0yIDE5aDIwdjJIMnYtMnptOS0xMWgydjhoLTJWOHpNNy45NjUgOGgyLjEyNWwtMi45ODYgNy45NjRoLTJMMi4xMTggOGgyLjEyNWwxLjg2MSA1LjExM0w3Ljk2NSA4ek0xNyAxNHYyaC0yVjhoNGEzIDMgMCAwIDEgMCA2aC0yem0wLTR2MmgyYTEgMSAwIDAgMCAwLTJoLTJ6TTIgM2gyMHYySDJWM3oiIGZpbGw9IiNmZmZmZmYiIGNsYXNzPSJmaWxsLTAwMDAwMCI+PC9wYXRoPjwvc3ZnPg==\" />"};
+		  var balansers = {"videocdn":"VideoCDN","collaps":"Collaps","kinobase":"Kinobase","filmix":"Filmix","cdnmovies":"CDNmovies","rezka":"Rezka","pub":"Pub 4K  <span style=\"font-weight: 700;color:rgb(236,151,31)\">VIP</span>","hdr":"HDR MODS's [4K]  <span style=\"font-weight: 700;color:rgb(236,151,31)\">VIP</span>","hdrezka":"HDRezka 4K  <span style=\"font-weight: 700;color:rgb(236,151,31)\">VIP</span>","bazon":"Bazon 4K  <span style=\"font-weight: 700;color:rgb(236,151,31)\">VIP</span>","qiwi":"VBMovies 4K  <span style=\"font-weight: 700;color:rgb(236,151,31)\">VIP</span>","videodb":"VideoDB  <span style=\"font-weight: 700;color:rgb(236,151,31)\">VIP</span>","zetflix":"Zetflix  <span style=\"font-weight: 700;color:rgb(236,151,31)\">VIP</span>","uakino":"UAKino  <span style=\"font-weight: 700;color:rgb(236,151,31)\">VIP</span>","eneida":"Eneida(Ukr)  <span style=\"font-weight: 700;color:rgb(236,151,31)\">VIP</span>","kodik":"Kodik  <span style=\"font-weight: 700;color:rgb(236,151,31)\">VIP</span>","anilibria":"Anilibria  <span style=\"font-weight: 700;color:rgb(236,151,31)\">VIP</span>","hdvb":"HDVB  <span style=\"font-weight: 700;color:rgb(236,151,31)\">VIP</span>","kinotochka":"KinoTochka  <span style=\"font-weight: 700;color:rgb(236,151,31)\">VIP</span>"};
       if (Lampa.Storage.get('pro_pub', false)) balansers = Object.assign({"pub":"Pub"}, balansers);
       return balansers;
     },
@@ -442,7 +473,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       var u = url + '/api/v2.0/indexers/' + (Lampa.Storage.field('jackett_interview') == 'healthy' ? 'status:healthy' : 'all') + '/results?apikey=' + (json && json.key || Lampa.Storage.get('jackett_key'));
       Pub.network.timeout(10000);
       var check = function check (ok) {
-        Pub.network["native"](Lampa.Utils.checkHttp(u), function (t) {
+        Pub.network["native"](Protocol() + u, function (t) {
           if(name && !call) item2.removeClass('active error wait').addClass('active');
           if(call) {
             if(name && !Modss.jack[name].check) Modss.jack[name].check = true;
@@ -450,7 +481,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             call(true);
           }
         }, function (a, c) {
-          console.error('Request', 'parser error - ', Lampa.Utils.checkHttp(u));
+          console.error('Request', 'parser error - ', Protocol() + u);
           Lampa.Noty.show(Pub.network.errorDecode(a, c) + ' - ' + url);
           if(name && !call) item2.removeClass('active error wait').addClass('error');
           if(call) {
@@ -468,7 +499,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         if(Boolean(Modss.jack[Lampa.Storage.get('jackett_url2')])) item.removeClass('wait').addClass(Modss.jack[Lampa.Storage.get('jackett_url2')].ok ? 'active' : 'error');
       }
     },
-    jack:{
+    jack:{					
       jacred_xyz:       {url:'jacred.xyz', key:'',lang:'df_lg', interv:'all'},
       spawn_pp_ua:      {url:'spawn.pp.ua:59117', key:2,lang:'df', interv:'all'},
       jacred_ru:        {url:'jacred.ru', key:'',lang:'lg', interv:'healthy'},
@@ -502,9 +533,9 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     speedTest: function(url, params) {
       Lampa.Speedtest.start({url:url});
       $('.speedtest__body').prepend('<center style="color:rgba(255, 255, 255, 0.2);font-size:2em;font-weight: 600;">'+params.balanser+'</center>').append('<center style="color:rgba(255, 255, 255, 0.2);font-size:2em;font-weight: 600;">'+params.title+'<br>('+params.info+')</center>');
-
-      return;
-
+      
+      return; 
+       
       var style = '<style>.arrow {transform-origin: 0 0px;transition: 0.34s ease;}.frequency {stroke-dasharray: 10 60;stroke-dashoffset: -27;}.frequency_second {stroke-dasharray: 1 69;stroke-dashoffset: 5;}.frequencyBgSpeed {stroke-dashoffset: -593;transition: 0.34s ease;stroke: #e50072;}polyline#pl {transition: 0.1s ease;}input[type=checkbox]:checked~.authForm {display: block;}.authForm {display: none;}</style>';
       var html = '<center>'+style+'<svg viewBox="-250 -302 500 345" style="height: unset;max-width:60em!important" fill="currentColor" width="600"><g class="scale"><circle r="200" fill="none" stroke-width="20" class="frequencyBgSpeed" style="stroke-dasharray:0,1256.8"></circle><circle r="200" fill="none" stroke="currentColor" stroke-width="20" class="frequency_second"></circle><circle r="200" fill="none" stroke="currentColor" stroke-width="20" class="frequency"></circle></g><path d="m-220 0 a120 -120 0 0 1 440 0" fill="none" stroke="blue" stroke-width="0" id="path"></path><text font-size="20px" x="30"><textPath href="#path">5</textPath></text><text font-size="20px" x="105"><textPath href="#path">10</textPath></text><text font-size="20px" x="185"><textPath href="#path">15</textPath></text><text font-size="20px" x="250"><textPath href="#path">20</textPath></text><text font-size="20px" x="330"><textPath href="#path">30</textPath></text><text font-size="20px" x="410"><textPath href="#path">60</textPath></text><text font-size="20px" x="485"><textPath href="#path">100</textPath></text><text font-size="20px" x="560"><textPath href="#path">200</textPath></text><text font-size="20px" x="635"><textPath href="#path">500</textPath></text><g class="arrow" style="transform:rotate(-100deg)"><path d="M-18,-10 0,-210 18,-10" fill="red"></path><circle r="20"></circle></g><text id="num" text-anchor="middle" alignment-baseline="central" y="-100" font-size="50">0.000</text><text text-anchor="middle" alignment-baseline="central" y="-60" font-size="25">Mbps</text><text id="status" text-anchor="middle" alignment-baseline="central" y="35" font-size="20"></text><path d="M-250,-300 v50 h500 v-50 z v5 h500 v5 h-500 v5 h500 v5 h-500 v5 h500 v5 h-500 v5 h500 v5 h-500 v5 h500 v5 h-450 v-50 h50 v50 h50 v-50 h50 v50 h50 v-50 h50 v50 h50 v-50 h50 v50 h50 v-50" fill="none" stroke="#888" stroke-width="0.2"></path><polyline id="pl" points="-250,-250" stroke="green" stroke-width="1" fill="none"></polyline></svg></center>';
       Lampa.Template.add('speed', html);
@@ -514,12 +545,12 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       var pl_p = [[-250, -250]];
       var tout;
       var xmlHTTP = new XMLHttpRequest();
-
+      
       var test = function test() {
           if (testStart) return;
           testUrl(url)
       };
-
+      
       function hslToRgb(hue, sat, light) {
         hue = hue % 360, hue += hue < 0 ? hue += 360 : 0, sat /= 100, light /= 100;
         function f(n) {
@@ -544,7 +575,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         speedBg.style.stroke = hslToRgb(330 + r, 100, 45);
         pl.attr('points', pl_p.map(function(pt){return pt.join(',')}).join(' '));
       }
-
+      
       function normalizeUrl(base, link) {
         if (link[0] === '/') return base.replace(/^(https?:\/\/[^\/]+).*$/i, '$1') + link;
         if (/^https?:?\/\//i.test(link)) return link;
@@ -587,7 +618,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           },
           error: errorFn
         });
-      }
+      }      
 
       function speedTest(bigFileUrl) {
         if (timeStart) return;
@@ -636,7 +667,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         xmlHTTP.onerror = endTest;
         xmlHTTP.send();
       }
-
+            
       this.showModal(tpl, test, true, xmlHTTP, [Lampa.Lang.translate('torrent_serial_date'), Lampa.Lang.translate('search_start').split(' ')[0]]);
     },
     balansPrf: 'videocdn',
@@ -653,7 +684,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 				}
 			} else return false;
 			return cache[key];
-		},
+		}, 
     setCache: function(key, data) {
 			var timestamp = new Date().getTime();
 			var cache = Lampa.Storage.cache(key, 1, {}); //500 это лимит ключей
@@ -669,7 +700,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 			}
 			return data;
 		}
-	};
+	}; 
 	var Filmix = {
   	network: new Lampa.Reguest(),
   	api_url: 'http://filmixapp.cyou/api/v2/',
@@ -992,7 +1023,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   				ForkTV.openBrowser('http://forktv.me');
   			});
 			});
-
+			
 			ping_auth = setInterval(function () {
 				ForkTV.check(ForkTV.url, function () {
 					Lampa.Modal.close();
@@ -1204,7 +1235,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   					checked: k.value == 1 ? true : false
   				});
   			});
-
+  
   			function main(type, value) {
   				var edited = {};
   				item.forEach(function (a) {
@@ -1263,7 +1294,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   		}, {});
   	}
   };
-
+  	
   function videocdn(component, _object) {
     var network = new Lampa.Reguest();
     var extract = {};
@@ -1276,10 +1307,10 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       season: 0,
       voice: 0,
       voice_name: '',
-      voice_id: 0,
+      voice_id: 0, 
       order: 0
     };
-
+    
     function _typeof(obj) {
   		"@babel/helpers - typeof";
   		return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
@@ -1293,7 +1324,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       object = _object;
       var itm = data[0];
       var select_title = itm.title || object.movie.title;
-      var url = Lampa.Utils.protocol() +'videocdn.tv/api/';
+      var url = Protocol() +'videocdn.tv/api/';
       var type = itm.iframe_src.split('/').slice(-2)[0];
       if (type == 'movie') type = 'movies';
       if (type == 'anime') type = 'animes';
@@ -1323,7 +1354,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         season: 0,
         voice: 0,
         voice_name: '',
-        voice_id: 0,
+        voice_id: 0, 
         order: 0
       };
       filter();
@@ -1331,12 +1362,12 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     };
     this.filter = function (type, a, b) {
       choice[a.stype] = b.index;
-
+  
       if (a.stype == 'voice') {
         choice.voice_name = filter_items.voice[b.index];
         choice.voice_id = filter_items.voice_info[b.index] && filter_items.voice_info[b.index].id;
       }
-
+  
       component.reset();
       filter();
       append(filtred());
@@ -1372,7 +1403,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         });
         return items;
       } catch (e) {}
-
+  
       return [];
     }
     function extractData(results) {
@@ -1424,7 +1455,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           get_links_wait = false;
           component.render().find('.broadcast__scan').remove();
         };
-
+        
         if (iframe_proxy) {
           component.proxyCall('GET', src, 20000, null, call_success, call_fail);
         } else if (window.location.protocol !== 'http:') {
@@ -1455,7 +1486,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       network.timeout(20000);
       var movie = results.slice(0, 1)[0];
       extract = {};
-
+  
       if (movie) {
         var src = movie.iframe_src;
         var meta = $('head meta[name="referrer"]');
@@ -1466,29 +1497,29 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           get_links_wait = false;
           component.render().find('.online_modss__scan-file').remove();
           var math = raw.replace(/\n/g, '').match(/id="files" value="(.*?)"/);
-
+          
           if (!math) {
             math = raw.replace(/\n/g, '').match(/id="files" value='(.*?)'/);
           }
-
+  
           if (math) {
             var text = document.createElement("textarea");
             text.innerHTML = math[1];
             var json = Lampa.Arrays.decodeJson(text.value, {});
-
+  
             for (var i in json) {
               if (0 === i - 0) {
                 continue;
               }
-
+  
               extract[i] = {
                 json: _typeof(json[i]) === 'object' ? json[i] : Lampa.Arrays.decodeJson(json[i], {}),
                 items: extractItems(json[i])
               };
-
+  
               for (var a in extract[i].json) {
                 var elem = extract[i].json[a];
-
+  
                 if (elem.folder) {
                   for (var f in elem.folder) {
                     var folder = elem.folder[f];
@@ -1513,16 +1544,16 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       var file = '';
       var items = [];
       var quality = false;
-
+  
       if (translat) {
         if (element.season) {
           for (var i in translat.json) {
             var elem = translat.json[i];
-
+  
             if (elem.folder) {
               for (var f in elem.folder) {
                 var folder = elem.folder[f];
-
+  
                 if (folder.id == id) {
                   items = folder.items;
                   break;
@@ -1537,7 +1568,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           items = translat.items;
         }
       }
-
+  
       if (items && items.length) {
         quality = {};
         var mass = [1080, 720, 480, 360];
@@ -1545,7 +1576,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           var exes = items.find(function (a) {
             return a.quality == n;
           });
-
+  
           if (exes) {
             if (!file) file = exes.file;
             quality[n + 'p'] = exes.file;
@@ -1554,7 +1585,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         var preferably = Lampa.Storage.get('video_quality_default', '1080') + 'p';
         if (quality[preferably]) file = quality[preferably];
       }
-
+  
       return {
         file: file,
         quality: quality
@@ -1564,7 +1595,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       filter_items = {
         season: [],
         voice: [],
-        voice_info: [],
+        voice_info: [], 
         order: []
       };
       results.slice(0, 1).forEach(function (movie) {
@@ -1576,14 +1607,14 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             }
           });
           var s = season_count;
-
+  
           while (s--) {
             filter_items.season.push(Lampa.Lang.translate('torrent_serial_season') + ' ' + (season_count - s));
           }
         }
-
+  
         if (!filter_items.season[choice.season]) choice.season = 0;
-
+  
         if (movie.episodes) {
           component.order.forEach(function (i){
   					filter_items.order.push(i.title);
@@ -1606,25 +1637,25 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       });
       if (!filter_items.season[choice.season]) choice.season = 0;
       if (!filter_items.voice[choice.voice]) choice.voice = 0;
-
+  
       if (choice.voice_name) {
         var inx = -1;
-
+  
         if (choice.voice_id) {
           var voice = filter_items.voice_info.find(function (v) {
             return v.id == choice.voice_id;
           });
           if (voice) inx = filter_items.voice_info.indexOf(voice);
         }
-
+  
         if (inx == -1) inx = filter_items.voice.indexOf(choice.voice_name);
         if (inx == -1) choice.voice = 0;else if (inx !== choice.voice) {
           choice.voice = inx;
         }
       }
-
+  
       component.filter(filter_items, choice);
-    }
+    }    
     function filtred() {
       var filtred = [];
         results.slice(0, 1).forEach(function (movie) {
@@ -1687,11 +1718,11 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         },
         onEnter: function onEnter(item, html) {
           var extra = getFile(item, item.quality);
-
+  
           if (extra.file) {
             var playlist = [];
             var first = toPlayElement(item);
-
+  
             if (item.season) {
               items.forEach(function (elem) {
                 playlist.push(toPlayElement(elem));
@@ -1699,7 +1730,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             } else {
               playlist.push(first);
             }
-
+  
             if (playlist.length > 1) first.playlist = playlist;
             Lampa.Player.play(first);
             Lampa.Player.playlist(playlist);
@@ -1712,7 +1743,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       });
     }
   }
-
+  
   function rezka(component, _object) {
     var network = new Lampa.Reguest();
     var extract = {};
@@ -1787,19 +1818,19 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     }
     function getChoiceVoice() {
       var res = extract.voice[0];
-
+  
       if (choice.voice_token) {
         extract.voice.forEach(function (voice) {
           if (voice.token === choice.voice_token) res = voice;
         });
       }
-
+  
       return res;
     }
     function getFirstTranlate(id,call) {
       network.clear();
       network.timeout(10000);
-
+      
       network["native"](embed + 'embed/' + id, function (str) {
         extractData(str);
         if (extract.voice.length) call(getChoiceVoice().token);
@@ -1834,12 +1865,12 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             var check = extract.season.filter(function (s) {
               return s.id == ses;
             });
-
+  
             if (!check.length) {
               choice.season = extract.season.length - 1;
               url = embed + 'serial/' + voice + '/iframe?s=' + extract.season[choice.season].id + '&h=gidonline.io';
             }
-
+  
             getEmbed(url);
           });
         } else {
@@ -1860,7 +1891,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           return v.name;
         }) : []
       };
-
+  
       if (choice.voice_name) {
         var inx = filter_items.voice.map(function (v) {
           return v.toLowerCase();
@@ -1870,16 +1901,16 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           choice.voice = inx;
         }
       }
-
+      
       if(!extract.season[choice.season]) choice.season = 0;
       else choice.seasons = filter_items.season.length;
-
+  
       component.filter(filter_items, choice);
     }
     function parseSubtitles(str) {
       var subtitles = [];
       var subtitle = str.match("'subtitle': '(.*?)'");
-
+  
       if (subtitle) {
         subtitles = component.parsePlaylist(subtitle[1]).map(function (item) {
           return {
@@ -1888,7 +1919,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           };
         });
       }
-
+  
       return subtitles.length ? subtitles : false;
     }
     function extractItems(str) {
@@ -1896,11 +1927,11 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         var items = component.parsePlaylist(str).map(function (item) {
           var quality = item.label.match(/(\d\d\d+)p/);
           var links;
-
+  
           links = item.links.filter(function (url) {
             return /\.mp4$/i.test(url);
           });
-
+          
           if (!links.length) links = item.links;
           return {
             label: item.label,
@@ -1917,30 +1948,30 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         });
         return items;
       } catch (e) {}
-
+  
       return [];
     }
     function getStream(element, call, error) {
       if (element.stream) return call(element.stream);
       var url = embed;
-
+  
       if (element.season) {
         url += 'serial/' + element.voice.token + '/iframe?s=' + element.season + '&e=' + element.episode + '&h=gidonline.io';
       } else {
         url += 'movie/' + element.voice.token + '/iframe?h=gidonline.io';
       }
-
+  
       network.clear();
       network.timeout(5000);
       network["native"](url, function (str) {
         var videos = str.match("'file': '(.*?)'");
-
+  
         if (videos) {
           var video = decode(videos[1]),
               file = '',
               quality = false;
           var items = extractItems(video);
-
+  
           if (items && items.length) {
             file = items[0].file;
             quality = {};
@@ -1950,7 +1981,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             var preferably = Lampa.Storage.get('video_quality_default', '1080') + 'p';
             if (quality[preferably]) file = quality[preferably];
           }
-
+  
           if (file) {
             element.stream = file;
             element.qualitys = quality;
@@ -1964,32 +1995,32 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     }
     function decode(data) {
       if (data.charAt(0) !== '#') return data;
-
+  
       var enc = function enc(str) {
         return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function (match, p1) {
           return String.fromCharCode('0x' + p1);
         }));
       };
-
+  
       var dec = function dec(str) {
         return decodeURIComponent(atob(str).split('').map(function (c) {
           return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
       };
-
-      var trashList =  ['$$$####!!!!!!!', '^^^^^^##@', '@!^^!@#@@$$$$$', '^^#@@!!@#!$', '@#!@@@##$$@@'];
-
+      
+      var trashList = TRASH_R;
+  
       var x = data.substring(2);
       trashList.forEach(function (trash) {
         x = x.replace('//_//' + enc(trash), '');
       });
-
+  
       try {
         x = dec(x);
       } catch (e) {
         x = '';
       }
-
+  
       return x;
     }
     function extractData(str) {
@@ -2000,7 +2031,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       var voices = str.match('<select name="translator"[^>]+>(.*?)</select>');
       var sesons = str.match('<select name="season"[^>]+>(.*?)</select>');
       var episod = str.match('<select name="episode"[^>]+>(.*?)</select>');
-
+  
       if (sesons) {
         var select = $('<select>' + sesons[1] + '</select>');
         $('option', select).each(function () {
@@ -2010,13 +2041,13 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           });
         });
       }
-
+  
       if (voices) {
         var _select = $('<select>' + voices[1] + '</select>');
-
+  
         $('option', _select).each(function () {
           var token = $(this).attr('data-token');
-
+  
           if (token) {
             extract.voice.push({
               token: token,
@@ -2026,10 +2057,10 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           }
         });
       }
-
+  
       if (episod) {
         var _select2 = $('<select>' + episod[1] + '</select>');
-
+  
         $('option', _select2).each(function () {
           extract.episode.push({
             id: $(this).attr('value'),
@@ -2041,7 +2072,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     function append() {
       component.reset();
       var items = [];
-
+  
       if (extract.season.length) {
         extract.episode.forEach(function (episode) {
           items.push({
@@ -2065,7 +2096,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           });
         });
       }
-
+  
       component.draw(items, {
         onEnter: function onEnter(item, html) {
           getStream(item, function (stream) {
@@ -2077,7 +2108,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
               title: item.title
             };
             Lampa.Player.play(first);
-
+  
             if (item.season) {
               var playlist = [];
               items.forEach(function (elem) {
@@ -2120,7 +2151,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       });
     }
   }
-
+  
   function filmix(component, _object) {
   	var network = new Lampa.Reguest();
   	var results = [];
@@ -2141,7 +2172,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   	if (!window.FX) {
   		window.FX = {
   			max_qualitie: 480,
-  			is_max_qualitie: false,
+  			is_max_qualitie: false, 
   			auth: false
   		};
   	}
@@ -2172,7 +2203,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             if (!c.year && c.alt_name) c.year = parseInt(c.alt_name.split('-').pop());
             return !c.year || !search_year || c.year > search_year - 2 && c.year < search_year + 2;
           });
-
+          
           if (orig) {
             var tmp = cards.filter(function (c) {
               return component.equalTitle(c.original_title, orig);
@@ -2182,7 +2213,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
               is_sure = true;
             }
           }
-
+  
           if (select_title) {
             var _tmp = cards.filter(function (c) {
               return component.equalTitle(c.title, select_title);
@@ -2192,35 +2223,35 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
               is_sure = true;
             }
           }
-
+  
           if (cards.length > 1 && search_year) {
             var _tmp2 = cards.filter(function (c) {
               return c.year == search_year;
             });
             if (_tmp2.length) cards = _tmp2;
           }
-
-          /*
+  
+          /*    
           if (cards.length > 1) {
             var tmp = cards.filter(function (c) {
               return c.year == search_year;
             });
             if (tmp.length) cards = tmp;
           }
-
+  
           if (cards.length > 1) {
             var _tmp = cards.filter(function (c) {
               return c.original_title == orig;
             });
-
+  
             if (_tmp.length) cards = _tmp;
           }
-
+  
           if (cards.length > 1) {
             var _tmp2 = cards.filter(function (c) {
               return c.title == select_title;
             });
-
+  
             if (_tmp2.length) cards = _tmp2;
           }
     				*/
@@ -2326,15 +2357,15 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         component.order.forEach(function (i){
   				filter_items.order.push(i.title);
   			});
-
+  			
   			for (var seasons in results.playlist){
           filter_items.season_id.push(seasons);
           filter_items.season.push(Lampa.Lang.translate('torrent_serial_season') + ' ' + seasons);
-        }
+        } 
   		  Lampa.Arrays.getKeys(results.playlist[filter_items.season[choice.season].split(' ')[1]]).forEach(function (v){
   		    filter_items.voice.push(v);
   		  });
-
+  			
         if (!filter_items.voice[choice.voice]) choice.voice = 0;
   			choice.seasons = filter_items.season.length;
   		}
@@ -2360,24 +2391,24 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   		  if(seasons == filter_items.season_id[choice.season]){
     		  var season = results.playlist[seasons][filter_items.voice[choice.voice]];
     		 	for (var episode in season) {
-      		  var eps = season[episode];
+      		  var eps = season[episode]; 
       		  var quality = season[episode].qualities.filter(function (elem) {
       				return parseInt(elem) <= window.FX.max_qualitie && parseInt(elem) !== 0;
       			}).sort(function(a, b) {
     		      return b - a;
-    		    });
+    		    });  
     		    filtred.push({
   						episode: parseInt(episode),
   						season: parseInt(seasons),
   						link: season[episode].link,
   						title: Lampa.Lang.translate('torrent_serial_episode') + ' ' +  episode,
-  						qualityes: quality,
+  						qualityes: quality, 
   						quality: results.quality + ' - ' + quality[0] + 'p ',
-  						info: filter_items.voice[choice.voice],
+  						info: filter_items.voice[choice.voice], 
   						voice_name: filter_items.voice[choice.voice]
   					});
     		  }
-  		  }
+  		  } 
   		}
   		} else if (results.movie && results.movie.length > 0) {
   			for (var keyt in results.movie) {
@@ -2386,9 +2417,9 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   				if(q.max) filtred.push({
   					title: movie.translation,
   					link: movie.link,
-  					qualityes: q.quals,
+  					qualityes: q.quals, 
   					quality: results.quality + ' - ' + q.max + 'p ',
-  					voice_name: movie.translation,
+  					voice_name: movie.translation, 
   					info: ''
   				});
   			}
@@ -2402,12 +2433,12 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         var qualities = element.qualityes//JSON.parse(element.qualityes);
         if (qualities) {
           qualities.forEach(function (q) {
-            var files = object.movie.number_of_seasons ? element.link.replace(/%s(\.mp4)/i, q + "$1"): element.link.replace(/\[[\d,]*\](\.mp4)/i, q + "$1");
+            var files = object.movie.number_of_seasons || element.season ? element.link.replace(/%s(\.mp4)/i, q + "$1"): element.link.replace(/\[[\d,]*\](\.mp4)/i, q + "$1");
             quality[q + 'p'] = files;
           });
           files = Lampa.Arrays.getValues(quality)[0];
         }
-      }
+      } 
       return {
         file: files,
         quality: quality
@@ -2453,7 +2484,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       });
     }
   }
-
+  
   function kinobase(component, _object) {
   	var network = new Lampa.Reguest();
   	var extract = [];
@@ -2471,11 +2502,11 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   	var wait_similars;
   	var choice = {
   		season: 0,
-  		voice: 0,
+  		voice: 0, 
   		order: 0,
   		voice_name:''
   	};
-
+  
   	this.search = function (_object, sim) {
       if (wait_similars && sim) return getPage(sim[0].link);
     };
@@ -2490,7 +2521,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         var links = object.movie.number_of_seasons ? str.match(/<a href="\/(serial|tv_show)\/([^"]*)" class="link"[^>]*>(.*?)<\/a>/g) : str.match(/<a href="\/film\/([^"]*)" class="link"[^>]*>(.*?)<\/a>/g);
         var search_date = object.search_date || object.movie.release_date || object.movie.first_air_date || object.movie.last_air_date || '0000';
         var search_year = parseInt((search_date + '').slice(0, 4));
-
+  
         if (links) {
           var is_sure = false;
 
@@ -2499,12 +2530,12 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
                 titl = link.attr('title') || link.text() || '';
             var year;
             var found = titl.match(/^(.*)\((\d{4})\)$/);
-
+  
             if (found) {
               year = parseInt(found[2]);
               titl = found[1].trim();
             }
-
+  
             return {
               year: year,
               title: titl,
@@ -2561,7 +2592,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
                   type = link.attr('href').indexOf('film') > -1 ? 'film' : 'serial';
               similars.push({
                 title: titl,
-                type: type,
+                type: type, 
                 link: link.attr('href')
               });
             });
@@ -2584,7 +2615,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   		component.reset();
   		choice = {
   			season: 0,
-  			voice: 0,
+  			voice: 0, 
   			order: 0
   		};
   		filter();
@@ -2606,7 +2637,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         voice: [],
         order: []
       };
-
+  
       if (is_playlist) {
         component.order.forEach(function (i){
   				filter_items.order.push(i.title);
@@ -2617,13 +2648,13 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           }
         });
       }
-
+  
       if (!filter_items.season[choice.season]) choice.season = 0;
-
+  
       if (is_playlist) {
         extract.forEach(function (item, i) {
           var playlist = item.playlist || item.folder;
-
+  
           if (playlist) {
             if (i == choice.season) {
               playlist.forEach(function (eps) {
@@ -2645,7 +2676,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           }
         });
       }
-
+  
       if (!filter_items.voice[choice.voice]) choice.voice = 0;
       component.filter(filter_items, choice);
     }
@@ -2665,7 +2696,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   					var title = eps.title || eps.comment || '';
   					var alt_voice = (eps.comment || eps.title).match(/\d+ серия (.*)$/i);
   					var info = items[0].voice || (alt_voice && alt_voice[1].trim()) || translation;
-
+  				
   					if (info == title) info = '';
   					if(season){
   					  var episode = parseInt(title);
@@ -2763,33 +2794,33 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 				var MOVIE_ID = str.match('var MOVIE_ID = ([^;]+);');
 				var IDENTIFIER = str.match('var IDENTIFIER = "([^"]+)"');
 				var PLAYER_CUID = str.match('var PLAYER_CUID = "([^"]+)"');
-
+				
 				if (MOVIE_ID && IDENTIFIER && PLAYER_CUID) {
 					select_id = MOVIE_ID[1];
 					var identifier = IDENTIFIER[1];
 					var player_cuid = PLAYER_CUID[1];
-
+					
 					var user_url = "user_data";
           user_url = Lampa.Utils.addUrlComponent(user_url, "page=movie");
           user_url = Lampa.Utils.addUrlComponent(user_url, "movie_id=" + select_id);
           user_url = Lampa.Utils.addUrlComponent(user_url, "cuid=" + player_cuid);
           user_url = Lampa.Utils.addUrlComponent(user_url, "device=DESKTOP");
           user_url = Lampa.Utils.addUrlComponent(user_url, "_=" + Date.now());
-
+          
 					var data_url = "videoplayer.js";
 					data_url = Lampa.Utils.addUrlComponent(data_url, "movie_id=" + select_id);
           data_url = Lampa.Utils.addUrlComponent(data_url, "IDENTIFIER=" + identifier);
           data_url = Lampa.Utils.addUrlComponent(data_url, "player_type=new");
           data_url = Lampa.Utils.addUrlComponent(data_url, "file_type=mp4");
 					data_url = Lampa.Utils.addUrlComponent(data_url, "_=" + Math.floor(Date.now() / 1e3));
-
+					
 					network.clear();
           network.timeout(1000 * 10);
           network["native"](embed + user_url, function () {}, function () {}, false, {
             dataType: 'text',
             withCredentials: !prox
           });
-
+					
 					network.clear();
 					network.timeout(1000 * 10);
 					network["native"](embed + data_url, function (vod_script) {
@@ -2811,7 +2842,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
                  }
                }
             }
-
+            
             if (vod_url) {
               network.clear();
               network.timeout(1000 * 10);
@@ -2912,11 +2943,11 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         similars: wait_similars,
         onEnter: function onEnter(item, html) {
           getFile(item);
-
+  
           if (item.stream) {
             var playlist = [];
             var first = toPlayElement(item);
-
+  
             if (item.season) {
               items.forEach(function (elem) {
                 playlist.push(toPlayElement(elem));
@@ -2924,7 +2955,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             } else {
               playlist.push(first);
             }
-
+  
             if (playlist.length > 1) first.playlist = playlist;
             Lampa.Player.play(first);
             Lampa.Player.playlist(playlist);
@@ -2937,7 +2968,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       });
     }
   }
-
+  
   function collaps(component, _object) {
   	var network = new Lampa.Reguest();
   	var extract = {};
@@ -2948,7 +2979,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   	var prefer_dash = Lampa.Storage.field('online_dash') === true;
   	var choice = {
   		season: 0,
-  		voice: 0,
+  		voice: 0, 
   		order: 0
   	};
     this.searchByKinopoisk = function (_object, id) {
@@ -2980,7 +3011,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   		component.reset();
   		choice = {
   			season: 0,
-  			voice: 0,
+  			voice: 0, 
   			order: 0
   		};
   		filter();
@@ -3031,7 +3062,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   			});
   			choice.seasons = filter_items.season.length;
   		}
-
+  		
   		filter_items.season.sort(function(a,b){
         var n_a = parseInt(a.replace(/\D/g,''));
         var n_b = parseInt(b.replace(/\D/g,''));
@@ -3039,7 +3070,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         else if(n_a < n_b) return -1;
         else return 0;
       });
-
+  		
   		if (!filter_items.season[choice.season]) choice.season = 0;
   		component.filter(filter_items, choice);
   	}
@@ -3111,12 +3142,12 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
               url: item.file,
               timeline: item.timeline,
               title: item.title,
-              subtitles: item.subtitles,
+              subtitles: item.subtitles, 
               translate: {
                 tracks: item.audio_tracks
               }
             };
-
+  
             if (item.season) {
               items.forEach(function (elem) {
                 playlist.push({
@@ -3135,7 +3166,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             } else {
               playlist.push(first);
             }
-
+  
             if (playlist.length > 1) first.playlist = playlist;
             Lampa.Player.play(first);
             Lampa.Player.playlist(playlist);
@@ -3150,7 +3181,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       });
     }
   }
-
+  
   function cdnmovies(component, _object) {
   	var network = new Lampa.Reguest();
   	var extract = [];
@@ -3162,9 +3193,9 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   	var prefer_old = false;
     var choice = {
   		season: 0,
-  		voice: 0,
+  		voice: 0, 
   		order: 0
-  	};
+  	}; 
     var old_embed = 'https://1f29036bcf55d.sarnage.cc/';
     var new_embed = 'https://cdnmovies-stream.online/';
     var prox = component.proxy('cdnmovies');
@@ -3209,8 +3240,8 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           } else empty();
         });
       }, error);
-    };
-
+    };  
+    
     function cdn_api_search2(api, callback, error) {
       network.clear();
       network.timeout(10000);
@@ -3274,7 +3305,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         new_search(old_search_run, old_search_run);
       }
     };
-
+   
     this.extendChoice = function (saved) {
   		Lampa.Arrays.extend(choice, saved, true);
   	};
@@ -3309,7 +3340,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   		try {
   			json = video && JSON.parse(video);
   		} catch (e) {}
-
+  		
   		if (json) {
   		  component.loading(false);
   			extract = json;
@@ -3319,34 +3350,34 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   	}
     function decode(data) {
       if (data.charAt(0) !== '#') return data;
-
+  
       var enc = function enc(str) {
         return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function (match, p1) {
           return String.fromCharCode('0x' + p1);
         }));
       };
-
+  
       var dec = function dec(str) {
         return decodeURIComponent(atob(str).split('').map(function (c) {
           return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''));
       };
-
+  
       var trashList = ['-*frofpscprpamfpQ*45612.3256dfrgd', '54vjfhcgdbrydkcfkndz568436fred+*d', 'lvfycgndqcydrcgcfg+95147gfdgf-zd*', 'az+-erw*3457edgtjd-feqsptf/re*q*Y', 'df8vg69r9zxWdlyf+*fgx455g8fh9z-e*Q'];
       var x = data.substring(2);
       trashList.forEach(function (trash) {
         x = x.replace('//' + enc(trash), '');
       });
-
+  
       try {
         x = dec(x);
       } catch (e) {
         x = '';
       }
-
+  
       return x;
     }
-
+  	
   	function extractItemsPlaylist(str, url) {
       if (!str) return [];
 
@@ -3354,6 +3385,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         var items = component.parsePlaylist(str).map(function (item) {
           var quality = item.label.match(/(\d\d\d+)p/);
           var link = item.links[0] || '';
+          link = link.replace('/sundb.coldcdn.xyz/', '/sundb.nl/');
           return {
             label: item.label,
             quality: quality ? parseInt(quality[1]) : NaN,
@@ -3398,6 +3430,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         parseStream(element, call, error, extractItemsPlaylist, url, '');
         return;
       }
+      link = link.replace('/sundb.coldcdn.xyz/', '/sundb.nl/');
 
       if (url) {
         element.stream = url;
@@ -3441,6 +3474,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 		}
   	function parseSubs(str) {
   		var subtitles = component.parsePlaylist(str).map(function (item) {
+        link = link.replace('/sundb.coldcdn.xyz/', '/sundb.nl/');
   			return {
   				label: item.label,
   				url: item.links[0]
@@ -3489,7 +3523,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     function append(items) {
       component.reset();
       component.draw(items, {
-       // similars: wait_similars,
+       // similars: wait_similars, 
         onEnter: function onEnter(item, html) {
           if (item.loading) return;
           item.loading = true;
@@ -3503,7 +3537,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
               title: item.title
             };
             Lampa.Player.play(first);
-
+  
             if (item.season) {
               var playlist = [];
               items.forEach(function (elem) {
@@ -3530,7 +3564,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             } else {
               Lampa.Player.playlist([first]);
             }
-
+  
             if (item.subtitles && Lampa.Player.subtitles) Lampa.Player.subtitles(item.subtitles);
             item.mark();
           }, function (data) {
@@ -3551,7 +3585,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       });
     }
   }
-
+  
   function pub(component, _object) {
   	var network = new Lampa.Reguest();
   	var extract = {};
@@ -3657,7 +3691,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   		choice = {
   			season: 0,
   			voice: 0,
-  			order: 0,
+  			order: 0, 
   			type: 0
   		};
   		append(filtred());
@@ -3683,7 +3717,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   		filter_items = {
   			season: [],
   			voice: [],
-  			type: [],
+  			type: [], 
   			order: []
   		};
   	  ['HTTP', 'HLS', 'HLS2', 'HLS4'].forEach(function (t) {
@@ -3716,7 +3750,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   							quality: ep.files[0].quality + ' (' + CODEC + ')',
   							file: ep.files,
   							codec: CODEC,
-  							voice: parseTrackss(ep.audios).join('<br>'),
+  							voice: parseTrackss(ep.audios).join('<br>'), 
   							tracks: parseTracks(ep.audios || ''),
   							subtitles: parseSubs(ep.subtitles || ''),
   							info: type
@@ -3731,7 +3765,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   					quality: movie.files[0].quality + ' (' + CODEC + ')',
   					file: movie.files,
   					codec: CODEC,
-  					voice: parseTrackss(movie.audios).join('<br>'),
+  					voice: parseTrackss(movie.audios).join('<br>'), 
   					tracks: parseTracks(movie.audios || ''),
   					subtitles: parseSubs(movie.subtitles || ''),
   					info: type
@@ -3806,11 +3840,11 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         similars: wait_similars,
         onEnter: function onEnter(item, html) {
           var ex = getFile(item);
-
+  
           if (ex.stream) {
             var playlist = [];
             var first = toPlayElement(item);
-
+  
             if (item.season) {
               items.forEach(function (elem) {
                 playlist.push(toPlayElement(elem));
@@ -3818,7 +3852,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             } else {
               playlist.push(first);
             }
-
+  
             if (playlist.length > 1) first.playlist = playlist;
             Lampa.Player.play(first);
             Lampa.Player.playlist(playlist);
@@ -3831,11 +3865,11 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       });
     }
   }
-
+  
   var proxyInitialized = false;
   var proxyWindow;
   var proxyCalls = {};
-
+  
   function component(object) {
     var network = new Lampa.Reguest();
     var scroll = new Lampa.Scroll({
@@ -3854,7 +3888,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     var balanser_timer;
     var images = [];
   	var balansers = Modss.balansers();
-
+  
     var filter_sources = Lampa.Arrays.getKeys(balansers);
     var filter_translate = {
       season: Lampa.Lang.translate('torrent_serial_season'),
@@ -3863,32 +3897,34 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     };
     this.initialize = function () {
       var _this = this;
-
+      
       try {
         filter_sources.forEach(function(b){
     		  sources[b] = eval(b);
     		});
       } catch (e) {}
-
+  
       source = this.createSource();
-
+  
       filter.onSearch = function (value) {
         Lampa.Activity.replace({
           search: value,
           clarification: true
         });
       };
-
+  
       filter.onBack = function () {
         _this.start();
       };
-
+      
       filter.render().find('.selector').on('hover:enter', function () {
         clearInterval(balanser_timer);
       })
-
+  
       filter.onSelect = function (type, a, b) {
-        if (type == 'filter') {
+        if (a.bal) {
+					filter.render().find('.filter--sort').trigger('hover:enter');
+				} else if (type == 'filter') {
           if (a.reset) {
             if (extended) source.reset();else _this.start();
           } else {
@@ -3905,7 +3941,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         if (object.movie.number_of_seasons || balanser == 'pub' || balanser == 'bazon') filter.render().find('.filter--filter').show();
   		  else filter.render().find('.filter--filter').hide();
       };
-
+  
       if (object.movie.number_of_seasons || balanser == 'pub' || balanser == 'bazon') filter.render().find('.filter--filter').show();
   	  else filter.render().find('.filter--filter').hide();
   	  filter.render().find('.filter--sort').on('hover:enter', function () {
@@ -3938,9 +3974,9 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         balanser = last_select_balanser[object.movie.id];
         Lampa.Storage.set('online_last_balanser', last_select_balanser);
       } else balanser = priority_balanser;
-
+      
       if (!sources[balanser]) balanser = priority_balanser;
-
+      
       if (balanser == 'undefined') balanser = priority_balanser;
       if (!sources[balanser]) balanser = Lampa.Arrays.getKeys(sources)[0];
       return new sources[balanser](this, object);
@@ -3951,15 +3987,15 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   		var need_url = Lampa.Storage.get('onl_mods_proxy_' + name);
   		var prox = Lampa.Storage.get('mods_proxy_all');
   		var main = Lampa.Storage.get('mods_proxy_main', false);
-  		var myprox = Lampa.Utils.protocol() +'prox.lampa.stream/';
+  		var myprox = Protocol() +'prox.lampa.stream/';
   		var proxys = 'https://cors.nb557.workers.dev/' + (IP ? 'ip' + IP + '/' : '');
   		var pr = 'https://cors.eu.org/';
-  		var reserv = Lampa.Utils.protocol() +'lampa.stream/prox/';
+  		var reserv = Protocol() +'lampa.stream/prox/';
   		//if (Lampa.Storage.field('mods_proxy_main') === true || (need == 'on' && need_url.length == 0 && prox == '')) proxy = myprox;
   		if (need == 'on' && name == 'videocdn') return true;
   		if (need == 'on' && name == 'cdnmovies') return proxys;
   		if ((need == 'on' || main) && name == 'collaps' && need_url.length == 0) return myprox;
-  		if ((need == 'on' || main) && name == 'hdrezka' && need_url.length == 0) return myprox;
+  		if ((need == 'on' || main) && name == 'hdrezka' && need_url.length == 0) return proxys;
   		if ((need == 'on' || main) && name == 'kinobase' && need_url.length == 0) return myprox;
   		else if (need == 'on' && need_url.length >= 0 && prox !== '') proxy = prox;
   		else if (need == 'url' || (need == 'on' && need_url.length > 0)) proxy = need_url;
@@ -3986,7 +4022,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   		var search_date = object.search_date || object.movie.release_date || object.movie.first_air_date || object.movie.last_air_date || '0000';
   		var search_year = parseInt((search_date + '').slice(0, 4));
   		var orig = object.movie.original_title || object.movie.original_name;
-
+  		
   		var display = function display(items) {
         if (items && items.length) {
           var is_sure = false;
@@ -3994,7 +4030,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             var tmp = items.filter(function (elem) {
               return (elem.imdb_id || elem.imdbId) == object.movie.imdb_id;
             });
-
+  
             if (tmp.length) {
               items = tmp;
               is_sure = true;
@@ -4005,30 +4041,30 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             c.tmp_year = parseInt((year + '').slice(0, 4));
             return !c.tmp_year || !search_year || c.tmp_year > search_year - 2 && c.tmp_year < search_year + 2;
           });
-
+          
           if(cards.length) {
             if (orig) {
               var _tmp = cards.filter(function (elem) {
                 return _this2.equalTitle(elem.orig_title || elem.nameOriginal || elem.en_title || elem.nameEn || elem.ru_title || elem.nameRu, orig);
               });
-
+  
               if (_tmp.length) {
                 cards = _tmp;
                 is_sure = true;
               }
             }
-
+  
             if (query) {
               var _tmp2 = cards.filter(function (elem) {
                 return _this2.equalTitle(elem.title || elem.ru_title || elem.nameRu || elem.en_title || elem.nameEn || elem.orig_title || elem.nameOriginal, query);
               });
-
+  
               if (_tmp2.length) {
                 cards = _tmp2;
                 is_sure = true;
               }
             }
-
+  
             if (cards.length > 1 && search_year) {
               var _tmp3 = cards.filter(function (c) {
                 return c.tmp_year == search_year;
@@ -4036,11 +4072,11 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
               if (_tmp3.length) cards = _tmp3;
             }
           } else cards = items;
-
+          
           if (cards.length == 1 && is_sure) {
             _this2.extendChoice();
             var kinopoisk_id = cards[0].kinopoisk_id || cards[0].kinopoisk_ID || cards[0].kp_id || cards[0].kinopoiskId || cards[0].filmId;
-
+  
             if (kinopoisk_id && source.searchByKinopoisk) {
               source.searchByKinopoisk(object, kinopoisk_id);
             } else if (cards[0].imdb_id && source.searchByImdbID) {
@@ -4056,15 +4092,15 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           }
         } else _this2.doesNotAnswer(query);
       };
-
+  
   		var vcdn_search = function vcdn_search() {
   			var url;
         if (balanser == 'videoapi') {
-          url = Lampa.Utils.protocol() +'5100.svetacdn.in/api/short';
+          url = Protocol() +'5100.svetacdn.in/api/short';
           url = Lampa.Utils.addUrlComponent(url, 'api_token=qR0taraBKvEZULgjoIRj69AJ7O6Pgl9O');
         } else {
           var prox = _this2.proxy('videocdn');
-          url = Lampa.Utils.protocol() +'videocdn.tv/api/short';
+          url = Protocol() +'videocdn.tv/api/short';
           url = Lampa.Utils.addUrlComponent(url, 'api_token=3i40G5TSECmLF77oAqnEgbx61ZWaOYaE');
         }
   			var url_by_title = Lampa.Utils.addUrlComponent(url, 'title=' + encodeURIComponent(query));
@@ -4087,7 +4123,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           _this2.doesNotAnswer();
         });
   		};
-
+  		
   		var kp_search = function kp_search() {
   			var url = API + 'KPfind/' + encodeURIComponent(query);
   			if(object.movie.imdb_id) url = API + 'KPimdb/' + encodeURIComponent(object.movie.imdb_id);
@@ -4100,7 +4136,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   				vcdn_search();
   			});
   		};
-
+  		
   	  var letgo = function letgo(imdb_id) {
   			if (['videocdn', 'videoapi'].indexOf(balanser) >= 0) vcdn_search();
   			else if(source.searchByKinopoisk) kp_search();
@@ -4108,7 +4144,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           _this2.extendChoice();
           source.searchByImdbID(object, imdb_id);
         } else {
-          var url = Lampa.Utils.protocol() +'videocdn.tv/api/short';
+          var url = Protocol() +'videocdn.tv/api/short';
           url = Lampa.Utils.addUrlComponent(url, 'api_token=3i40G5TSECmLF77oAqnEgbx61ZWaOYaE');
           var url_end = Lampa.Utils.addUrlComponent(url, imdb_id ? 'imdb_id=' + encodeURIComponent(imdb_id) : 'title=' + encodeURIComponent(query));
           network.timeout(1000 * 15);
@@ -4119,7 +4155,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           }, kp_search());
         }
   		};
-
+  	  
   	  if (source.searchByTitle) {
         this.extendChoice();
         source.searchByTitle(object, query);
@@ -4145,7 +4181,8 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           letgo();
         });
       } else letgo();
-  	};this.cleanTitle = function (str) {
+  	};
+  	this.cleanTitle = function (str) {
       return str.replace(/[\s.,:;’'`!?]+/g, ' ').trim();
     };
     this.normalizeTitle = function (str) {
@@ -4194,14 +4231,14 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   	};
   	this.parseM3U = function (str) {
       var pl = [];
-
+  
       try {
         var width = 0;
         var height = 0;
         str.split('\n').forEach(function (line) {
           if (line.charAt(0) == '#') {
             var resolution = line.match(/\bRESOLUTION=(\d+)x(\d+)\b/);
-
+  
             if (resolution) {
               width = parseInt(resolution[1]);
               height = parseInt(resolution[2]);
@@ -4217,7 +4254,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           }
         });
       } catch (e) {}
-
+  
       return pl;
     };
   	this.proxyCall = function (method, url, timeout, post_data, call_success, call_fail) {
@@ -4356,15 +4393,15 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   			var count_s = elem.seasons_count ? elem.seasons_count + ' ' + Lampa.Lang.translate('torrent_serial_season').toLowerCase() + _this3.num_word(elem.seasons_count, ['', 'а', 'ов']) : '';
   			var count_eps = elem.episodes_count ? elem.episodes_count + ' эпизод' + _this3.num_word(elem.episodes_count, ['', 'а', 'ов']) : '';
         if (year) info.push(year);
-  			if (elem.type) info.push(elem.type == 'serial' || elem.type == 'MINI_SERIES' ? ('Cериал' + (count_s && ' - ' + count_s + ' из них ' + count_eps)) :
-  			           elem.type == 'TV_SHOW' ? 'Тв-Шоу' :
+  			if (elem.type) info.push(elem.type == 'serial' || elem.type == 'MINI_SERIES' ? ('Cериал' + (count_s && ' - ' + count_s + ' из них ' + count_eps)) : 
+  			           elem.type == 'TV_SHOW' ? 'Тв-Шоу' : 
   			           elem.type == ('movie' || 'film' || 'FILM') ? 'Фильм' : elem.type);
   			if (transl) info.push(transl);
         if (elem.rating && elem.rating !== 'null' && elem.filmId) info.push(Lampa.Template.get('modss_online_rate', {
           rate: elem.rating
         }, true));
         if (elem.quality && elem.quality.length) info.push(elem.quality);
-
+  
         if (elem.countries && elem.countries.length) {
           info.push((elem.filmId ? elem.countries.map(function (c) {
             return c.country;
@@ -4372,11 +4409,11 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             return c.title || c;
           })).join(', '));
         }
-
+  
         if (elem.categories && elem.categories.length) {
         //  info.push(elem.categories.slice(0, 4).join(', '));
         }
-
+  
         var name = elem.title || elem.ru_title || elem.en_title || elem.nameRu || elem.nameEn;
         var orig = elem.orig_title || elem.nameEn || '';
         elem.title = name + (orig && orig !== name ? ' / ' + orig : '');
@@ -4385,16 +4422,16 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         var item = Lampa.Template.get('modss_online_folder', elem);
         item.on('hover:enter', function () {
           _this3.activity.loader(true);
-
+  
           _this3.reset();
-
+  
           object.search_date = year;
           selected_id = elem.id;
-
+  
           _this3.extendChoice();
-
+  
           var kinopoisk_id = elem.kp_id || elem.filmId;
-
+  
           if (kinopoisk_id && source.searchByKinopoisk) {
             source.searchByKinopoisk(object, kinopoisk_id);
           } else if (source.search) {
@@ -4412,9 +4449,9 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     this.clearImages = function () {
       images.forEach(function (img) {
         img.onerror = function () {};
-
+  
         img.onload = function () {};
-
+  
         img.src = '';
       });
       images = [];
@@ -4436,7 +4473,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     this.filter = function (filter_items, choice) {
       var _this4 = this;
       var select = [];
-
+  
       var add = function add(type, title) {
         var need = _this4.getChoice();
         var items = filter_items[type];
@@ -4456,26 +4493,30 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           stype: type
         });
       };
-
+  
       filter_items.source = filter_sources;
       choice.source = filter_sources.indexOf(balanser);
       select.push({
         title: Lampa.Lang.translate('torrent_parser_reset'),
         reset: true
-      });
+      }, {
+				title: Lampa.Lang.translate('modss_balanser'),
+				subtitle: sources[balanser].name,
+				bal: true
+			});
       this.saveChoice(choice);
       if (filter_items.voice && filter_items.voice.length) add('voice', Lampa.Lang.translate('torrent_parser_voice'));
       if (filter_items.season && filter_items.season.length) add('season', Lampa.Lang.translate('torrent_serial_season'));
       if (filter_items.type && filter_items.type.length) add('type', Lampa.Lang.translate('filter_video_stream') + '');
   		if (filter_items.server && filter_items.server.length) add('server', Lampa.Lang.translate('filter_video_server') + '');
   		if (filter_items.order && filter_items.order.length) add('order', Lampa.Lang.translate('filter_series_order') + '');
-
+  		
   		filter.set('filter', select);
       filter.set('sort', filter_sources.map(function (e, i) {
         var tpl = {
 				  title: balansers[e],
           source: e,
-          selected: e == balanser,
+          selected: e == balanser, 
           ghost: i >= (Lampa.Storage.get('pro_pub', false) ? 7 : 6) ? true : false
         };
         if(i >= (Lampa.Storage.get('pro_pub', false) ? 7 : 6)) {
@@ -4484,16 +4525,16 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         };
         return tpl;
       }));
-
+      
       this.selected(filter_items);
     };
     this.closeFilter = function () {
       if ($('body').hasClass('selectbox--open')) Lampa.Select.close();
     };
     this.selected = function (filter_items) {
-      var need = this.getChoice(),
+      var need = this.getChoice(), 
           select = [];
-
+  
       for (var i in need) {
         if (filter_items[i] && filter_items[i].length) {
           if (i == 'voice') {
@@ -4505,7 +4546,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           }
         }
       }
-
+  
       filter.chosen('filter', select);
       filter.chosen('sort', [balanser]);
       this.new_seria();
@@ -4542,14 +4583,14 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var choice = _this4.getChoice();
       if (!items.length) return this.empty();
-
+    
       this.getEpisodes((object.movie.source == 'pub' || balanser == 'pub') || (object.movie.original_language !== 'ja' || object.movie.number_of_seasons >= choice.seasons) ? items[0].season : 1, function (episodes) {
         var viewed = Lampa.Storage.cache('online_view', 5000, []);
         var serial = object.movie.name ? true : false;
         var fully = window.innerWidth > 480;
         var scroll_to_element = false;
         var scroll_to_mark = false;
-
+        
         var more = object.movie.original_language == 'ja' && episodes.length > items.length && (object.movie.number_of_seasons < choice.seasons)
         var ismore = true;
         if (more){
@@ -4557,7 +4598,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           ismore = items[items.length-1].episode >= episodes[ep.length].episode_number;
           if(ismore) ep = episodes.slice(items.length-((episodes.length-items.length) < items.length-1 ? 2 : 1));
         }
-
+        
         items.forEach(function (element, index) {
           var episode = serial && episodes.length && !params.similars ? ((ismore && more) ? ep : episodes).find(function (e, i) {
             return (ismore && more) ? index == i : ((e.episode_number || e.number) == element.episode);
@@ -4565,7 +4606,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           var episodee = serial && episodes.length && !params.similars ? episodes.find(function (e, i) {
             return (e.episode_number || e.number) == element.episode;
           }) : false;
-
+          
           var episode_num = element.episode || index + 1;
           var episode_last = choice.episodes_view[element.season];
           Lampa.Arrays.extend(element, {
@@ -4581,14 +4622,14 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             hash_behold: hash_behold
           };
           var info = [];
-
+  
           if (element.season) {
             element.translate_episode_end = _this4.getLastEpisode(items);
             element.translate_voice = element.voice_name;
           }
-
+  
           element.timeline = Lampa.Timeline.view(hash_timeline);
-
+          
           if (episode) {
             element.title = (element.episode_name || episode.name || episode.title || element.title);
             if (!element.info && episode.vote_average) info.push(Lampa.Template.get('modss_online_rate', {
@@ -4598,7 +4639,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           } else if (object.movie.release_date && object.movie.release_date.length > 4 && fully) {
             info.push(Lampa.Utils.parseTime(object.movie.release_date).full);
           }
-
+  
           if (!serial && object.movie.tagline && element.info.length < 30) info.push(object.movie.tagline);
           if (element.info) info.push(element.info);
           if (info.length) element.info = info.map(function (i) {
@@ -4607,13 +4648,13 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           var html = Lampa.Template.get('modss_online_full', element);
           var loader = html.find('.online_modss__loader');
           var image = html.find('.online_modss__img');
-
+  
           if (!serial) {
             if (choice.movie_view == hash_behold) scroll_to_element = html;
           } else if (typeof episode_last !== 'undefined' && episode_last == episode_num) {
             scroll_to_element = html;
     		    var cont = _this4.getChoice();
-            if(Lampa.Storage.field('online_continued') && cont && cont.continued) {
+            if(Lampa.Storage.field('online_continued') && cont && cont.continued) { 
         			cont.continued = false;
         			_this4.saveChoice(cont);
         			_this4.extendChoice();
@@ -4622,18 +4663,18 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         		  }, balanser == 'videocdn' ? 2000 : 50);
       			}
           }
-
+          
           if (serial && element.episode) image.append('<div class="online_modss__episode-number-season">S' + (element.season || episode.snumber || episode.season_number || 0) + ':E' + (element.episode || episode.number || episode.episode_number || 0) + '</div>');
           if (serial && !episode) {
             image.append('<div class="online_modss__episode-number">' + ('0' + (element.episode || index + 1)).slice(-2) + '</div>');
             loader.remove();
           } else {
             var img = html.find('img')[0];
-
+  
             img.onerror = function () {
               img.src = './img/img_broken.svg';
             };
-
+  
             img.onload = function () {
               image.addClass('online_modss__img--loaded');
               loader.remove();
@@ -4641,44 +4682,44 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             img.src = object.movie.source == 'filmix' ? object.movie.img : object.movie.source == 'pub' ? (episode && episode.thumbnail || object.movie.background_image) : Lampa.TMDB.image('t/p/w300' + (episode ? episode.still_path : object.movie.backdrop_path));
             images.push(img);
           }
-
+  
           html.find('.online_modss__timeline').append(Lampa.Timeline.render(element.timeline));
-
+          
           if (Lampa.Timeline.details) {
             html.find('.online_modss__timeline').append(Lampa.Timeline.details(element.timeline));
           }
-
+  
           if (viewed.indexOf(hash_behold) !== -1) {
             scroll_to_mark = html;
             html.find('.online_modss__img').append('<div class="online_modss__viewed">' + Lampa.Template.get('icon_viewed', {}, true) + '</div>');
           }
-
+  
           element.mark = function () {
             viewed = Lampa.Storage.cache('online_view', 5000, []);
-
+  
             if (viewed.indexOf(hash_behold) == -1) {
               viewed.push(hash_behold);
               Lampa.Storage.set('online_view', viewed);
-
+  
               if (html.find('.online_modss__viewed').length == 0) {
                 html.find('.online_modss__img').append('<div class="online_modss__viewed">' + Lampa.Template.get('icon_viewed', {}, true) + '</div>');
               }
             }
-
+  
             choice = _this4.getChoice();
-
+  
             if (!serial) {
               choice.movie_view = hash_behold;
             } else {
               choice.episodes_view[element.season] = episode_num;
             }
-
+  
             _this4.saveChoice(choice);
             _this4.new_seria();
           };
           element.unmark = function () {
             viewed = Lampa.Storage.cache('online_view', 5000, []);
-
+  
             if (viewed.indexOf(hash_behold) !== -1) {
               Lampa.Arrays.remove(viewed, hash_behold);
               Lampa.Storage.set('online_view', viewed);
@@ -4694,7 +4735,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             Lampa.Timeline.update(element.timeline);
             _this4.new_seria();
           };
-
+  
           html.on('hover:enter', function () {
             if (object.movie.id) Lampa.Favorite.add('history', object.movie, 100);
             if (params.onEnter) params.onEnter(element, html, data);
@@ -4705,13 +4746,13 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
               $('.explorer-card__descr').hide().after('<div class="voices"></div>');
               //$('.explorer-card__descr').html(Lampa.Lang.translate('<b>#{torrent_parser_voice}:</b><br>' +element.voice));
               $('.voices').html(Lampa.Lang.translate('<b>#{torrent_parser_voice}:</b><br>' +element.voice));
-            }
-
+            } 
+            
             if (params.onFocus) params.onFocus(element, html, data);
             scroll.update($(e.target), true);
           });
           if (params.onRender) params.onRender(element, html, data);
-
+  
           _this4.contextMenu({
             html: html,
             element: element,
@@ -4729,10 +4770,10 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
               });
             }
           });
-
+  
           scroll.append(html);
         });
-
+        
         if (serial && object.movie.number_of_seasons >= choice.seasons && episodes.length > items.length && !params.similars) {
           var left = episodes.slice(items.length);
           left.forEach(function (episode) {
@@ -4754,31 +4795,31 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
               quality: day > 0 ? txt : ''
             });
             html.css('opacity','0.3');
-
+            
             var loader = html.find('.online_modss__loader');
             var image = html.find('.online_modss__img');
             var season = items[0] ? items[0].season : 1;
             html.find('.online_modss__timeline').append(Lampa.Timeline.render(Lampa.Timeline.view(Lampa.Utils.hash([season, episode.episode_number, object.movie.original_title].join('')))));
             var img = html.find('img')[0];
-
+  
             if (episode.still_path) {
               img.onerror = function () {
                 img.src = './img/img_broken.svg';
               };
-
+  
               img.onload = function () {
                 image.addClass('online_modss__img--loaded');
                 loader.remove();
                 image.append('<div class="online_modss__episode-number">' + ('0' + episode.episode_number).slice(-2) + '</div>');
               };
-
+  
               img.src = Lampa.TMDB.image('t/p/w300' + episode.still_path);
               images.push(img);
             } else {
               loader.remove();
               image.append('<div class="online_modss__episode-number">' + ('0' + episode.episode_number).slice(-2) + '</div>');
             }
-
+  
             html.on('hover:focus', function (e) {
               last = e.target;
               scroll.update($(e.target), true);
@@ -4786,13 +4827,13 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             scroll.append(html);
           });
         }
-
+  
         if (scroll_to_element) {
           last = scroll_to_element[0];
         } else if (scroll_to_mark) {
           last = scroll_to_mark[0];
         }
-
+  
         Lampa.Controller.enable('content');
       });
     };
@@ -4801,22 +4842,22 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         function show(extra) {
           var enabled = Lampa.Controller.enabled().name;
           var menu = [];
-
+  
           if (Lampa.Platform.is('webos')) {
             menu.push({
               title: Lampa.Lang.translate('player_lauch') + ' - Webos',
               player: 'webos'
             });
           }
-
+  
           if (Lampa.Platform.is('android')) {
             menu.push({
               title: Lampa.Lang.translate('player_lauch') + ' - Android',
               player: 'android'
             });
           }
-
-
+          
+  
           menu.push({
             title: Lampa.Lang.translate('player_lauch') + ' - Lampa',
             player: 'lampa'
@@ -4841,26 +4882,26 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             title: Lampa.Lang.translate('time_reset'),
             timeclear: true
           });
-
+  
           if (extra) {
             menu.push({
               title: Lampa.Lang.translate('copy_link'),
               copylink: true
             });
           }
-
+  
           menu.push({
             title: Lampa.Lang.translate('more'),
             separator: true
           });
-
+  
           if (Lampa.Account.logged() && params.element && typeof params.element.season !== 'undefined' && params.element.translate_voice) {
             menu.push({
               title: Lampa.Lang.translate('modss_voice_subscribe'),
               subscribe: true
             });
           }
-
+  
           menu.push({
             title: Lampa.Lang.translate('modss_clear_all_marks'),
             clearallmark: true
@@ -4882,27 +4923,27 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
               if (a.clearallmark) params.onClearAllMark();
               if (a.timeclearall) params.onClearAllTime();
               Lampa.Controller.toggle(enabled);
-
+  
               if (a.player) {
                 Lampa.Player.runas(a.player);
                 params.html.trigger('hover:enter');
               }
-
+              
               if (a.speed) {
                 Modss.speedTest(extra.file, {title:object.search, info:[params.element.title, params.element.quality].join(' - '), balanser: (['pub', 'hdr'].indexOf(balanser) >= 0 && params.element.info && params.element.info.split('<span class="online_modss-split">●</span>').pop() + ' - ' || '') + sources[balanser].name});
               }
-
+  
               if (a.copylink) {
                 if (extra.quality) {
                   var qual = [];
-
+  
                   for (var i in extra.quality) {
                     qual.push({
                       title: i,
                       file: extra.quality[i]
                     });
                   }
-
+  
                   Lampa.Select.show({
                     title: Lampa.Lang.translate('settings_server_links'),
                     items: qual,
@@ -4925,7 +4966,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
                   });
                 }
               }
-
+  
               if (a.subscribe) {
                 Lampa.Account.subscribeToTranslation({
                   card: object.movie,
@@ -4941,7 +4982,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
             }
           });
         }
-
+  
         params.onFile(show);
       }).on('hover:focus', function () {
         if (Lampa.Helper) Lampa.Helper.show('online_file', Lampa.Lang.translate('helper_online_file'), params.html);
@@ -4967,7 +5008,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       var _this6 = this;
       this.reset();
       var html = Lampa.Template.get('modss_does_not_answer', {
-        title: (query && query.length) ? (Lampa.Lang.translate('online_query_start') + ' (' + query + ') ' + Lampa.Lang.translate('online_query_end') + Lampa.Lang.translate('modss_balanser_dont_work_from')) : Lampa.Lang.translate('modss_balanser_dont_work'),
+        title: (query && query.length) ? (Lampa.Lang.translate('online_query_start') + ' (' + query + ') ' + Lampa.Lang.translate('online_query_end') + Lampa.Lang.translate('modss_balanser_dont_work_from')) : Lampa.Lang.translate('modss_balanser_dont_work'), 
         balanser: balansers[balanser]
       });
       var tic = 10;
@@ -4981,7 +5022,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       balanser_timer = setInterval(function () {
         tic--;
         html.find('.timeout').text(tic);
-
+  
         if (tic == 0) {
           clearInterval(balanser_timer);
           var keys = Lampa.Arrays.getKeys(sources);
@@ -5030,12 +5071,12 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     this.start = function () {
       var _this7 = this;
       if (Lampa.Activity.active().activity !== this.activity) return;
-
+  
       if (!initialized) {
         initialized = true;
         this.initialize();
       }
-
+  
       Lampa.Background.immediately(Lampa.Utils.cardImgBackgroundBlur(object.movie));
       Lampa.Controller.add('content', {
         toggle: function toggle() {
@@ -5085,7 +5126,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
       if (source) source.destroy();
     };
   }
-
+	
   function forktv(object) {
   	var network = new Lampa.Reguest();
   	var scroll = new Lampa.Scroll({
@@ -5653,7 +5694,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   	};
   	this.YouTube = function (id) {
   		var player, html$7, timer$1;
-
+  
   		function create$f(id) {
   			html$7 = $('<div class="youtube-player"><div id="youtube-player"></div><div id="youtube-player__progress" class="youtube-player__progress"></div></div>');
   			$('body').append(html$7);
@@ -5681,7 +5722,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   				}
   			});
   		}
-
+  
   		function update$2() {
   			timer$1 = setTimeout(function () {
   				var progress = player.getCurrentTime() / player.getDuration() * 100;
@@ -5689,7 +5730,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   				update$2();
   			}, 400);
   		}
-
+  
   		function play(id) {
   			create$f(id);
   			Lampa.Controller.add('youtube', {
@@ -5711,7 +5752,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   			});
   			Lampa.Controller.toggle('youtube');
   		}
-
+  
   		function destroy$2() {
   			clearTimeout(timer$1);
   			player.destroy();
@@ -5891,8 +5932,8 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   		body = null;
   	};
   }
-
-  function collection(object) {
+	
+	function collection(object) {
   	var network = new Lampa.Reguest();
   	var scroll = new Lampa.Scroll({
   		mask: true,
@@ -5924,7 +5965,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   				else url = object.url + '?sort=' + (object.sort ? object.sort : 'views-') + '&access_token=' + Pub.token;
   			} else if (object.sourc == 'rezka') url = object.url + '?filter=last';
 				else url = object.url;
-
+				
   			if ((object.page == 1 && object.card_cat) || object.cards || (!object.card && !Lampa.Storage.field('light_version') && object.card_cat)) {
   				this.activity.loader(true);
   				network.silent(cors + url, function (str) {
@@ -6227,7 +6268,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   			  _this1.next(data.page);
   			}
   			this.append(data);
-
+  	
   		//	if (Lampa.Platform.tv() && Lampa.Storage.field('light_version')) this.more(data);
   			scroll.append(body);
   			this.activity.loader(false);
@@ -6414,7 +6455,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   		info = null;
   	};
   }
-
+	
   function Radio_n(object) {
   	var audio = new Audio();
   	var network = new Lampa.Reguest();
@@ -6618,60 +6659,68 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
   		info = null;
   	};
   }
-
-  function startPlugin() {
-  	window.plugin_modss = true;
-  	Lampa.Component.add('forktv', forktv);
-  	Lampa.Component.add('Radio_n', Radio_n);
-
-  	Lampa.Component.add('modss_online', component);
-  	Lampa.Component.add('collection', collection);
-
-  	Lampa.Template.add('onlines_v1', "<div class='online onlines_v1 selector'><div class='online__body'><div style='position: absolute;left: 0;top: -0.3em;width: 2.4em;height: 2.4em'><svg style='height: 2.4em; width:  2.4em;' viewBox='0 0 128 128' fill='none' xmlns='http://www.w3.org/2000/svg'>   <circle cx='64' cy='64' r='56' stroke='white' stroke-width='16'/>   <path d='M90.5 64.3827L50 87.7654L50 41L90.5 64.3827Z' fill='white'/></svg>  </div><div class='online__title' style='padding-left: 2.1em;'>{title}</div><div class='online__quality' style='padding-left: 3.4em;'>{quality}{info}</div> </div></div>");
-  	Lampa.Template.add('modss_online_css', "<style>@charset 'UTF-8';.full-start-new__buttons .full-start__button.view--modss_online span{display:block;} .online_modss__episode-number-season{font-size:1em;font-weight:700;color:#fff;position:absolute;top:.5em;right:.5em;background-color: rgba(0, 0, 0, 0.4);padding:0.2em;-webkit-border-radius: 0.3em;moz-border-radius: 0.3em;border-radius: 0.3em;} .online_modss{position:relative;-webkit-border-radius:.3em;-moz-border-radius:.3em;border-radius:.3em;background-color:rgba(0,0,0,0.3);display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex}.online_modss__body{padding:1.2em;line-height:1.3;-webkit-box-flex:1;-webkit-flex-grow:1;-moz-box-flex:1;-ms-flex-positive:1;flex-grow:1;position:relative}@media screen and (max-width:480px){.online_modss__body{padding:.8em 1.2em}}.online_modss__img{position:relative;width:13em;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;min-height:8.2em}.online_modss__img>img{position:absolute;top:0;left:0;width:100%;height:100%;-o-object-fit:cover;object-fit:cover;-webkit-border-radius:.3em;-moz-border-radius:.3em;border-radius:.3em;opacity:0;-webkit-transition:opacity .3s;-o-transition:opacity .3s;-moz-transition:opacity .3s;transition:opacity .3s}.online_modss__img--loaded>img{opacity:1}@media screen and (max-width:480px){.online_modss__img{width:7em;min-height:6em}}.online_modss__folder{padding:1em;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0}.online_modss__folder>svg{width:4.4em!important;height:4.4em!important}.online_modss__viewed{position:absolute;top:1em;left:1em;background:rgba(0,0,0,0.45);-webkit-border-radius:100%;-moz-border-radius:100%;border-radius:100%;padding:.25em;font-size:.76em}.online_modss__subtitle{position:absolute;bottom:1em;left:1em;background:rgba(0,0,0,0.45);-webkit-border-radius:100%;-moz-border-radius:100%;border-radius:100%;padding:.25em;font-size:.76em}.online_modss__viewed>svg, .online_modss__subtitle>svg{width:1.5em!important;height:1.5em!important;}.online_modss__episode-number{position:absolute;top:0;left:0;right:0;bottom:0;display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-webkit-justify-content:center;-moz-box-pack:center;-ms-flex-pack:center;justify-content:center;font-size:2em}.online_modss__loader{position:absolute;top:50%;left:50%;width:2em;height:2em;margin-left:-1em;margin-top:-1em;background:url(./img/loader.svg) no-repeat center center;-webkit-background-size:contain;-moz-background-size:contain;-o-background-size:contain;background-size:contain}.online_modss__head,.online_modss__footer{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-pack:justify;-webkit-justify-content:space-between;-moz-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center}.online_modss__timeline{margin:.8em 0}.online_modss__timeline>.time-line{display:block !important}.online_modss__title{font-size:1.7em;overflow:hidden;-o-text-overflow:ellipsis;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;line-clamp:1;-webkit-box-orient:vertical}@media screen and (max-width:480px){.online_modss__title{font-size:1.4em}}.online_modss__time{padding-left:2em}.online_modss__info{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center}.online_modss__info>*{overflow:hidden;-o-text-overflow:ellipsis;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;line-clamp:1;-webkit-box-orient:vertical}.online_modss__quality{padding-left:1em;white-space:nowrap}.online_modss__scan-file{position:absolute;bottom:0;left:0;right:0}.online_modss__scan-file .broadcast__scan{margin:0}.online_modss .online_modss-split{font-size:.8em;margin:0 1em;flex-shrink: 0;}.online_modss.focus::after{content:'';position:absolute;top:-0.6em;left:-0.6em;right:-0.6em;bottom:-0.6em;-webkit-border-radius:.7em;-moz-border-radius:.7em;border-radius:.7em;border:solid .3em #fff;z-index:-1;pointer-events:none}.online_modss+.online_modss{margin-top:1.5em}.online_modss--folder .online_modss__footer{margin-top:.8em}.online_modss-rate{display:-webkit-inline-box;display:-webkit-inline-flex;display:-moz-inline-box;display:-ms-inline-flexbox;display:inline-flex;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center}.online_modss-rate>svg{width:1.3em!important;height:1.3em!important;}.online_modss-rate>span{font-weight:600;font-size:1.1em;padding-left:.7em}.online-empty{line-height:1.4}.online-empty__title{font-size:1.8em;margin-bottom:.3em}.online-empty__time{font-size:1.2em;font-weight:300;margin-bottom:1.6em}.online-empty__buttons{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex}.online-empty__buttons>*+*{margin-left:1em}.online-empty__button{background:rgba(0,0,0,0.3);font-size:1.2em;padding:.5em 1.2em;-webkit-border-radius:.2em;-moz-border-radius:.2em;border-radius:.2em;margin-bottom:2.4em}.online-empty__button.focus{background:#fff;color:black}.online-empty__templates .online-empty-template:nth-child(2){opacity:.5}.online-empty__templates .online-empty-template:nth-child(3){opacity:.2}.online-empty-template{background-color:rgba(255,255,255,0.3);padding:1em;display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center;-webkit-border-radius:.3em;-moz-border-radius:.3em;border-radius:.3em}.online-empty-template>*{background:rgba(0,0,0,0.3);-webkit-border-radius:.3em;-moz-border-radius:.3em;border-radius:.3em}.online-empty-template__ico{width:4em;height:4em;margin-right:2.4em}.online-empty-template__body{height:1.7em;width:70%}.online-empty-template+.online-empty-template{margin-top:1em} .online-modss-watched{padding:1em}.online-modss-watched__icon>svg{width:1.5em!important;height:1.5em!important;}.online-modss-watched__body{padding-left:1em;padding-top:.1em;display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-flex-wrap:wrap;-ms-flex-wrap:wrap;flex-wrap:wrap}.online-modss-watched__body>span+span::before{content:' ● ';vertical-align:top;display:inline-block;margin:0 .5em}   </style>");
-  	Lampa.Template.add('modss_online_full', "<div class=\"online_modss online_modss--full selector\"><div class=\"online_modss__img\">    <img alt=\"\">    <div class=\"online_modss__loader\"></div></div><div class=\"online_modss__body\">    <div class=\"online_modss__head\">        <div class=\"online_modss__title\">{title}</div>        <div class=\"online_modss__time\">{serv} {time}</div>    </div><div class=\"online_modss__timeline\"></div><div class=\"online_modss__footer\">        <div class=\"online_modss__info\">{info}</div>        <div class=\"online_modss__quality\">{quality}</div>    </div></div>    </div>");
-  	Lampa.Template.add('modss_does_not_answer', "<div class=\"online-empty\"><div class=\"online-empty__title\">    {title}</div><div class=\"online-empty__time\">    #{modss_balanser_timeout}</div><div class=\"online-empty__buttons\">    <div class=\"online-empty__button selector cancel\">#{cancel}</div>    <div class=\"online-empty__button selector change\">#{modss_change_balanser}</div></div><div class=\"online-empty__templates\">    <div class=\"online-empty-template\">        <div class=\"online-empty-template__ico\"></div>        <div class=\"online-empty-template__body\"></div>    </div>    <div class=\"online-empty-template\">        <div class=\"online-empty-template__ico\"></div>        <div class=\"online-empty-template__body\"></div>    </div>    <div class=\"online-empty-template\">        <div class=\"online-empty-template__ico\"></div>        <div class=\"online-empty-template__body\"></div>    </div></div>    </div>");
-  	Lampa.Template.add('modss_online_rate', "<div class=\"online_modss-rate\"><svg width=\"17\" height=\"16\" viewBox=\"0 0 17 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">    <path d=\"M8.39409 0.192139L10.99 5.30994L16.7882 6.20387L12.5475 10.4277L13.5819 15.9311L8.39409 13.2425L3.20626 15.9311L4.24065 10.4277L0 6.20387L5.79819 5.30994L8.39409 0.192139Z\" fill=\"#fff\"></path></svg><span>{rate}</span>    </div>");
-  	Lampa.Template.add('modss_online_folder', "<div class=\"online_modss online_modss--folder selector\"><div class=\"online_modss__folder\">    <svg viewBox=\"0 0 128 112\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">        <rect y=\"20\" width=\"128\" height=\"92\" rx=\"13\" fill=\"white\"></rect>        <path d=\"M29.9963 8H98.0037C96.0446 3.3021 91.4079 0 86 0H42C36.5921 0 31.9555 3.3021 29.9963 8Z\" fill=\"white\" fill-opacity=\"0.23\"></path>        <rect x=\"11\" y=\"8\" width=\"106\" height=\"76\" rx=\"13\" fill=\"white\" fill-opacity=\"0.51\"></rect>    </svg></div><div class=\"online_modss__body\">    <div class=\"online_modss__head\">        <div class=\"online_modss__title\">{title}</div>        <div class=\"online_modss__time\">{time}</div>    </div><div class=\"online_modss__footer\">        <div class=\"online_modss__info\">{info}</div>    </div></div>    </div>");
-  	Lampa.Template.add('modss_online_watched', "<div class=\"online_modss online-modss-watched selector\"><div class=\"online-modss-watched__icon\">    <svg width=\"21\" height=\"21\" viewBox=\"0 0 21 21\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">        <circle cx=\"10.5\" cy=\"10.5\" r=\"9\" stroke=\"currentColor\" stroke-width=\"3\"/>        <path d=\"M14.8477 10.5628L8.20312 14.399L8.20313 6.72656L14.8477 10.5628Z\" fill=\"currentColor\"/>    </svg></div><div class=\"online-modss-watched__body\">    </div></div>");
-  	Lampa.Template.add('epg_modss', "<div class=\"notice notice--card selector layer--render image--loaded\"><div class=\"notice__left\"><div class=\"notice__img\"><img/></div></div> <div class=\"notice__body\"> <div class=\"notice__head\"><div class=\"notice__title\">{title}</div><div class=\"notice__time\">{time}</div></div><div class=\"notice__descr\">{descr}</div></div></div>");
-  	Lampa.Template.add('icon_subs', '<svg width=\"23\" height=\"25\" viewBox=\"0 0 23 25\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M22.4357 20.0861C20.1515 23.0732 16.5508 25 12.5 25C5.59644 25 0 19.4036 0 12.5C0 5.59644 5.59644 0 12.5 0C16.5508 0 20.1515 1.9268 22.4357 4.9139L18.8439 7.84254C17.2872 6.09824 15.0219 5 12.5 5C7.80558 5 5 7.80558 5 12.5C5 17.1944 7.80558 20 12.5 20C15.0219 20 17.2872 18.9018 18.8439 17.1575L22.4357 20.0861Z\" fill=\"currentColor\"/>\n</svg>');
-  	Lampa.Template.add('modss_style', "<style>.program-body .notice__left{width:15em!important;} .program-body .notice__img{padding-bottom: 57% !important;} @media screen and (max-width:2560px){.epg--img{width:10em;}}@media screen and (max-width:420px){.program-body .notice--card{display:block} .program-body .notice__left{float:left;width:32em!important}.program-body .notice__body{float:left;} .program-body .notice__img{padding-bottom: 56% !important;}} .mods_iptv__program{padding:0 1em}.iptv-list{padding:1.5em;display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-webkit-justify-content:center;-moz-box-pack:center;-ms-flex-pack:center;justify-content:center;-webkit-box-orient:vertical;-webkit-box-direction:normal;-webkit-flex-direction:column;-moz-box-orient:vertical;-moz-box-direction:normal;-ms-flex-direction:column;flex-direction:column;padding-bottom:1em}.iptv-list__ico{width:4.5em;margin-bottom:2em;height:4.5em}.iptv-list__ico>svg{width:4.5em;height:4.5em}.iptv-list__title{font-size:1.9em;margin-bottom:1em}.iptv-list__items{width:80%;margin:0 auto}.iptv-list__items .scroll{height:22em}.iptv-list__item{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;padding:1em;background-color:rgba(255,255,255,0.1);font-size:1.3em;line-height:1.3;-webkit-border-radius:.3em;-moz-border-radius:.3em;border-radius:.3em;margin:1em}.iptv-list__item-name{width:40%;padding-right:1em;overflow:hidden;-o-text-overflow:ellipsis;text-overflow:ellipsis;white-space:nowrap;text-align:left}.iptv-list__item-url{width:60%;padding-left:1em;overflow:hidden;-o-text-overflow:ellipsis;text-overflow:ellipsis;white-space:nowrap;text-align:right}.iptv-list__item.focus{background-color:#fff;color:black}@media screen and (max-width: 585px) {.timeline{bottom:12em}.card--new_seria {right:2em!important;bottom:10em!important} .card--last_viewD{right:80%!important;top:2em!important}}</style>");
-
-  	Lampa.Template.add('hdgo_item', '<div class="selector hdgo-item"><div class="hdgo-item__imgbox"><img class="hdgo-item__img"/><div class="card__icons"><div class="card__icons-inner"></div></div></div><div class="hdgo-item__name">{title}</div></div>');
-  	Lampa.Template.add('hdgo_style', '<style>.last--focus .hdgo-item__imgbox::after {content: "";position: absolute;top: -0.4em;left: -0.4em;right: -0.4em;bottom: -0.4em;border: .3em solid red;-webkit-border-radius: .8em;-moz-border-radius: .8em;border-radius: .8em;opacity: .4}.modss-channel__name {padding:20px;text-align: center;font-size: 1.2em}.forktv.focus .hdgo-item__imgbox::after, .modss__tv.focus .hdgo-item__imgbox::after {opacity: 1}.nuamtv {filter: blur(7px);}.nuamtv:hover, .nuamtv:action {filter: blur(0px);}.a-r.b{color:#fff;background: linear-gradient(to right, rgba(204,0,0,1) 0%,rgba(150,0,0,1) 100%);}.a-r.de{color:#fff;background: linear-gradient(to right, #ffbc54 0%,#ff5b55 100%);}.a-r.g{background: linear-gradient(to right, rgba(205,235,142,1) 0%,rgba(165,201,86,1) 100%);color: #12420D;}.card.home.focus .card__img {border-color: green!important;-webkit-box-shadow: 0 0 0 0.4em green!important;-moz-box-shadow: 0 0 0 0.4em green!important;box-shadow: 0 0 0 0.4em green!important;}@media screen and (max-width: 2560px) {.pc.hdgo.card--collection,.pc.card--collection{width:11em!important} .tv_tv{width:12.5%!important}.tv_tv_c{width:20%!important}.tv_pc{width:16.66%!important}.tv.hdgo.card--collection{width:10.3em!important} .tv.card--collection{width:14.2%!important}.tv.sort.card--collection{width:25%!important}.tv.sort.hdgo.card--collection{width:25%!important}  .sort.hdgo.card--collection .card__view {padding-bottom:25%!important} .tv.two.sort.card--collection .card__view {padding-bottom: 10%!important} .tv.two.sort.card--collection{height:20%!important;width:50%!important}.pc.card--category, .tv.card--category{width:14.28%}.nuam.card--collection{width:20%!important}}  @media screen and (max-width: 1380px) {.pc.card--collection,.mobile,.mobile_tv{width:16.6%!important} .tv_pc{width:14.28%!important} .tv_pc_c{width:14.28%!important} .tv_tv{width:14.28%!important} .pc.hdgo.card--collection,.hdgo.card--collection{width:10em!important}.sort.pc.card--collection{width:25%!important}.sort.hdgo.card--collection{width:25%!important} .sort.hdgo.card--collection .card__view {padding-bottom:40%!important} .two.sort.card--collection{width:50%!important} .pc.two.sort.card--collection .card__view {padding-bottom: 33%!important} .pc.card--category,.nuam.card--category{width:11.5em!important}}  @media screen and (max-width: 420px) {.pc.card--collection,.mobile{width:10.3em!important}.mobile_tv{width:33.3%!important}  .pc.hdgo.card--collection,.hdgo.card--collection{width:10em!important}.pc.card--category,.nuam.card--category{width:7.9em!important}.nuam.card--collection{width:33.3%!important}.sort.hdgo.card--collection .card__view {padding-bottom:60%!important}}   .searc.card--collection .card__view {padding-bottom: 5%!important}.searc.card--collection{width:100%!important}.searc.card--collection .card__img{height:100%!important;}.hdgo-item{margin:0 .3em;width:10.4em;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0}.hdgo-item__imgbox{background-color:#3e3e3e;padding-bottom:60%;position:relative;-webkit-border-radius:.3em;-moz-border-radius:.3em;border-radius:.3em}.hdgo-item__img{position:absolute;top:0;left:0;width:100%;height:100%}.hdgo-item__name{font-size:1.1em;margin-top:.8em}.hdgo-item.focus .hdgo-item__imgbox::after{content:"";display:block;position:absolute;left:-.4em;top:-.4em;right:-.4em;bottom:-.4em;-border: .2em solid red;opacity:.6;-webkit-border-radius: .8em;-moz-border-radius: .8em;border-radius: .8em}.hdgo-item +.hdgo-item{margin:0 .3em}.modss_tv .items-line + .items-line, .forktv .items-line + .items-line {margin-top:0!important;}</style>');
-  	Lampa.Template.add('mods_radio_style', "<style>.blink2{-webkit-animation:blink2 1.5s linear infinite;animation:blink2 1.5s linear infinite}@-webkit-keyframes blink2{100%{color:rgba(34,34,34,0)}}@keyframes blink2{100%{color:rgba(34,34,34,0)}}.controll,.controll *{box-sizing:content-box;letter-spacing:0;}.controll{position:relative;transition:.5s linear;border:.3em solid #fff;background-color:#fff;border-radius:50%;bottom:4.19em;float:right;right:0;padding:1.7em;width:.2em;height:.2em;white-space:nowrap;text-align:center;cursor:pointer}.controll.pause{background-color:#353434;border-color:#3b6531}.controll,.controll .but_left,.controll .but_right,.controll:before{display:inline-block}.controll.pause .but_left,.controll.pause .but_right{margin-left:-8px;margin-top:-8px;border-left:8px solid #fff;border-top:0 solid transparent;border-bottom:0 solid transparent;height:18px}.controll.pause .but_left{border-right:10px solid transparent}.controll.play .but_right{margin-left:-5px;margin-top:-9px;border-left:15px solid #525252;border-top:10px solid transparent;border-bottom:10px solid transparent}.controll:hover,.controll.focus{background-color:#fff}.controll.play.focus{border-color:#8a8a8a}.controll.focus .but_left,.controll.focus .but_right,.controll:hover .but_left,.controll:hover .but_right{border-left-color:#252525}.Radio_n .card__view {padding-bottom: 75%!important;}.stbut,.stbut *{box-sizing:content-box;letter-spacing:0}.title_plaing{position:absolute;text-align:center;width:15em;margin-top:-1.2em;font-size:1.1em}.stbut{transition:.5s linear;border:.15em solid #fbfbfb;background-color:#000;border-radius:4em;margin-top:1em;padding:0.3em 4em 0em 0.5em;font-size:2em;cursor:pointer;height:1.5em;max-width:4em}.stbut:hover, .stbut.focus{background-color:#edebef;color:#616060;border-color:#8e8e8e}</style>");
-  	Lampa.Template.add('info_radio', '<div style="height:8em" class="radio_r info layer--width"><div class="info__left"><div style="margin-top:25px" class="info__title"></div><div class="info__create"></div></div><div style="display:block" class="info__right"> <b class="title_plaing"></b>   <div id="stantion_filtr"><div id="stbut" class="stbut selector"><b>СТАНЦИИ</b></div></div>    <div id="player_radio"><div id="plbut" class="controll selector play"><span class="but_left"></span><span class="but_right"></span></div></div></div></div>');
-  	Lampa.Template.add('mods_iptv_details', '<div class="mods_iptv-details"><div class="mods_epg-load" style="display:none;margin-bottom:-2em;position:relative"><div class="broadcast__text">' + Lampa.Lang.translate('search_searching') + '</div><div class="broadcast__scan"><div></div></div></div><div class="mods_iptv__program"></div></div>');
-    Lampa.Template.add('mods_iptv_list', "<div class=\"iptv-list layer--height\"><div class=\"iptv-list__ico\"><svg height=\"36\" viewBox=\"0 0 38 36\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">        <rect x=\"2\" y=\"8\" width=\"34\" height=\"21\" rx=\"3\" stroke=\"white\" stroke-width=\"3\"/>        <line x1=\"13.0925\" y1=\"2.34874\" x2=\"16.3487\" y2=\"6.90754\" stroke=\"white\" stroke-width=\"3\" stroke-linecap=\"round\"/><line x1=\"1.5\" y1=\"-1.5\" x2=\"9.31665\" y2=\"-1.5\" transform=\"matrix(-0.757816 0.652468 0.652468 0.757816 26.197 2)\" stroke=\"white\" stroke-width=\"3\" stroke-linecap=\"round\"/>        <line x1=\"9.5\" y1=\"34.5\" x2=\"29.5\" y2=\"34.5\" stroke=\"white\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg></div><div class=\"iptv-list__title\">#{iptv_select_playlist}</div><div class=\"iptv-list__items\"></div></div>");
-
-    manifest = {
-      type: 'video',
-      version: version_modss,
-      name: "Онлайн - MODS's v" + version_modss,
-      description: 'Плагин для просмотра онлайн сериалов и фильмов',
-      component: 'modss_online',
-      onContextMenu: function onContextMenu(object) {
-        return {
-          name: Lampa.Lang.translate('online_watch'),
-          description: ''
-        };
-      },
-      onContextLauch: function onContextLauch(object) {
-        Lampa.Activity.push({
-					url: '',
-					title: Lampa.Lang.translate('modss_title_online') + " - MODS's v" + version_modss,
-					component: 'modss_online',
-					search: object.title,
-					search_one: object.title,
-					search_two: object.original_title,
-					movie: object,
-					page: 1
-				});
-      }
-    };
-    Lampa.Manifest.plugins = manifest;
-    if (!Lampa.Lang) {
+	
+	function startPlugin() {
+		window.plugin_modss = true;
+		Lampa.Component.add('forktv', forktv);
+		Lampa.Component.add('Radio_n', Radio_n);
+		
+		Lampa.Component.add('modss_online', component);
+		Lampa.Component.add('collection', collection);
+		
+		Lampa.Template.add('onlines_v1', "<div class='online onlines_v1 selector'><div class='online__body'><div style='position: absolute;left: 0;top: -0.3em;width: 2.4em;height: 2.4em'><svg style='height: 2.4em; width:  2.4em;' viewBox='0 0 128 128' fill='none' xmlns='http://www.w3.org/2000/svg'>   <circle cx='64' cy='64' r='56' stroke='white' stroke-width='16'/>   <path d='M90.5 64.3827L50 87.7654L50 41L90.5 64.3827Z' fill='white'/></svg>  </div><div class='online__title' style='padding-left: 2.1em;'>{title}</div><div class='online__quality' style='padding-left: 3.4em;'>{quality}{info}</div> </div></div>");
+		Lampa.Template.add('modss_online_css', "<style>@charset 'UTF-8';.full-start-new__buttons .full-start__button.view--modss_online span{display:block;} .online_modss__episode-number-season{font-size:1em;font-weight:700;color:#fff;position:absolute;top:.5em;right:.5em;background-color: rgba(0, 0, 0, 0.4);padding:0.2em;-webkit-border-radius: 0.3em;moz-border-radius: 0.3em;border-radius: 0.3em;} .online_modss{position:relative;-webkit-border-radius:.3em;-moz-border-radius:.3em;border-radius:.3em;background-color:rgba(0,0,0,0.3);display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex}.online_modss__body{padding:1.2em;line-height:1.3;-webkit-box-flex:1;-webkit-flex-grow:1;-moz-box-flex:1;-ms-flex-positive:1;flex-grow:1;position:relative}@media screen and (max-width:480px){.online_modss__body{padding:.8em 1.2em}}.online_modss__img{position:relative;width:13em;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;min-height:8.2em}.online_modss__img>img{position:absolute;top:0;left:0;width:100%;height:100%;-o-object-fit:cover;object-fit:cover;-webkit-border-radius:.3em;-moz-border-radius:.3em;border-radius:.3em;opacity:0;-webkit-transition:opacity .3s;-o-transition:opacity .3s;-moz-transition:opacity .3s;transition:opacity .3s}.online_modss__img--loaded>img{opacity:1}@media screen and (max-width:480px){.online_modss__img{width:7em;min-height:6em}}.online_modss__folder{padding:1em;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0}.online_modss__folder>svg{width:4.4em!important;height:4.4em!important}.online_modss__viewed{position:absolute;top:1em;left:1em;background:rgba(0,0,0,0.45);-webkit-border-radius:100%;-moz-border-radius:100%;border-radius:100%;padding:.25em;font-size:.76em}.online_modss__subtitle{position:absolute;bottom:1em;left:1em;background:rgba(0,0,0,0.45);-webkit-border-radius:100%;-moz-border-radius:100%;border-radius:100%;padding:.25em;font-size:.76em}.online_modss__viewed>svg, .online_modss__subtitle>svg{width:1.5em!important;height:1.5em!important;}.online_modss__episode-number{position:absolute;top:0;left:0;right:0;bottom:0;display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-webkit-justify-content:center;-moz-box-pack:center;-ms-flex-pack:center;justify-content:center;font-size:2em}.online_modss__loader{position:absolute;top:50%;left:50%;width:2em;height:2em;margin-left:-1em;margin-top:-1em;background:url(./img/loader.svg) no-repeat center center;-webkit-background-size:contain;-moz-background-size:contain;-o-background-size:contain;background-size:contain}.online_modss__head,.online_modss__footer{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-pack:justify;-webkit-justify-content:space-between;-moz-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center}.online_modss__timeline{margin:.8em 0}.online_modss__timeline>.time-line{display:block !important}.online_modss__title{font-size:1.7em;overflow:hidden;-o-text-overflow:ellipsis;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;line-clamp:1;-webkit-box-orient:vertical}@media screen and (max-width:480px){.online_modss__title{font-size:1.4em}}.online_modss__time{padding-left:2em}.online_modss__info{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center}.online_modss__info>*{overflow:hidden;-o-text-overflow:ellipsis;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;line-clamp:1;-webkit-box-orient:vertical}.online_modss__quality{padding-left:1em;white-space:nowrap}.online_modss__scan-file{position:absolute;bottom:0;left:0;right:0}.online_modss__scan-file .broadcast__scan{margin:0}.online_modss .online_modss-split{font-size:.8em;margin:0 1em;flex-shrink: 0;}.online_modss.focus::after{content:'';position:absolute;top:-0.6em;left:-0.6em;right:-0.6em;bottom:-0.6em;-webkit-border-radius:.7em;-moz-border-radius:.7em;border-radius:.7em;border:solid .3em #fff;z-index:-1;pointer-events:none}.online_modss+.online_modss{margin-top:1.5em}.online_modss--folder .online_modss__footer{margin-top:.8em}.online_modss-rate{display:-webkit-inline-box;display:-webkit-inline-flex;display:-moz-inline-box;display:-ms-inline-flexbox;display:inline-flex;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center}.online_modss-rate>svg{width:1.3em!important;height:1.3em!important;}.online_modss-rate>span{font-weight:600;font-size:1.1em;padding-left:.7em}.online-empty{line-height:1.4}.online-empty__title{font-size:1.8em;margin-bottom:.3em}.online-empty__time{font-size:1.2em;font-weight:300;margin-bottom:1.6em}.online-empty__buttons{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex}.online-empty__buttons>*+*{margin-left:1em}.online-empty__button{background:rgba(0,0,0,0.3);font-size:1.2em;padding:.5em 1.2em;-webkit-border-radius:.2em;-moz-border-radius:.2em;border-radius:.2em;margin-bottom:2.4em}.online-empty__button.focus{background:#fff;color:black}.online-empty__templates .online-empty-template:nth-child(2){opacity:.5}.online-empty__templates .online-empty-template:nth-child(3){opacity:.2}.online-empty-template{background-color:rgba(255,255,255,0.3);padding:1em;display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center;-webkit-border-radius:.3em;-moz-border-radius:.3em;border-radius:.3em}.online-empty-template>*{background:rgba(0,0,0,0.3);-webkit-border-radius:.3em;-moz-border-radius:.3em;border-radius:.3em}.online-empty-template__ico{width:4em;height:4em;margin-right:2.4em}.online-empty-template__body{height:1.7em;width:70%}.online-empty-template+.online-empty-template{margin-top:1em} .online-modss-watched{padding:1em}.online-modss-watched__icon>svg{width:1.5em!important;height:1.5em!important;}.online-modss-watched__body{padding-left:1em;padding-top:.1em;display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-flex-wrap:wrap;-ms-flex-wrap:wrap;flex-wrap:wrap}.online-modss-watched__body>span+span::before{content:' ● ';vertical-align:top;display:inline-block;margin:0 .5em}   </style>");
+		Lampa.Template.add('modss_online_full', "<div class=\"online_modss online_modss--full selector\"><div class=\"online_modss__img\">    <img alt=\"\">    <div class=\"online_modss__loader\"></div></div><div class=\"online_modss__body\">    <div class=\"online_modss__head\">        <div class=\"online_modss__title\">{title}</div>        <div class=\"online_modss__time\">{serv} {time}</div>    </div><div class=\"online_modss__timeline\"></div><div class=\"online_modss__footer\">        <div class=\"online_modss__info\">{info}</div>        <div class=\"online_modss__quality\">{quality}</div>    </div></div>    </div>");
+		Lampa.Template.add('modss_does_not_answer', "<div class=\"online-empty\"><div class=\"online-empty__title\">    {title}</div><div class=\"online-empty__time\">    #{modss_balanser_timeout}</div><div class=\"online-empty__buttons\">    <div class=\"online-empty__button selector cancel\">#{cancel}</div>    <div class=\"online-empty__button selector change\">#{modss_change_balanser}</div></div><div class=\"online-empty__templates\">    <div class=\"online-empty-template\">        <div class=\"online-empty-template__ico\"></div>        <div class=\"online-empty-template__body\"></div>    </div>    <div class=\"online-empty-template\">        <div class=\"online-empty-template__ico\"></div>        <div class=\"online-empty-template__body\"></div>    </div>    <div class=\"online-empty-template\">        <div class=\"online-empty-template__ico\"></div>        <div class=\"online-empty-template__body\"></div>    </div></div>    </div>");
+		Lampa.Template.add('modss_online_rate', "<div class=\"online_modss-rate\"><svg width=\"17\" height=\"16\" viewBox=\"0 0 17 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">    <path d=\"M8.39409 0.192139L10.99 5.30994L16.7882 6.20387L12.5475 10.4277L13.5819 15.9311L8.39409 13.2425L3.20626 15.9311L4.24065 10.4277L0 6.20387L5.79819 5.30994L8.39409 0.192139Z\" fill=\"#fff\"></path></svg><span>{rate}</span>    </div>");
+		Lampa.Template.add('modss_online_folder', "<div class=\"online_modss online_modss--folder selector\"><div class=\"online_modss__folder\">    <svg viewBox=\"0 0 128 112\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">        <rect y=\"20\" width=\"128\" height=\"92\" rx=\"13\" fill=\"white\"></rect>        <path d=\"M29.9963 8H98.0037C96.0446 3.3021 91.4079 0 86 0H42C36.5921 0 31.9555 3.3021 29.9963 8Z\" fill=\"white\" fill-opacity=\"0.23\"></path>        <rect x=\"11\" y=\"8\" width=\"106\" height=\"76\" rx=\"13\" fill=\"white\" fill-opacity=\"0.51\"></rect>    </svg></div><div class=\"online_modss__body\">    <div class=\"online_modss__head\">        <div class=\"online_modss__title\">{title}</div>        <div class=\"online_modss__time\">{time}</div>    </div><div class=\"online_modss__footer\">        <div class=\"online_modss__info\">{info}</div>    </div></div>    </div>");
+		Lampa.Template.add('modss_online_watched', "<div class=\"online_modss online-modss-watched selector\"><div class=\"online-modss-watched__icon\">    <svg width=\"21\" height=\"21\" viewBox=\"0 0 21 21\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">        <circle cx=\"10.5\" cy=\"10.5\" r=\"9\" stroke=\"currentColor\" stroke-width=\"3\"/>        <path d=\"M14.8477 10.5628L8.20312 14.399L8.20313 6.72656L14.8477 10.5628Z\" fill=\"currentColor\"/>    </svg></div><div class=\"online-modss-watched__body\">    </div></div>");
+		Lampa.Template.add('epg_modss', "<div class=\"notice notice--card selector layer--render image--loaded\"><div class=\"notice__left\"><div class=\"notice__img\"><img/></div></div> <div class=\"notice__body\"> <div class=\"notice__head\"><div class=\"notice__title\">{title}</div><div class=\"notice__time\">{time}</div></div><div class=\"notice__descr\">{descr}</div></div></div>");
+		Lampa.Template.add('icon_subs', '<svg width=\"23\" height=\"25\" viewBox=\"0 0 23 25\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M22.4357 20.0861C20.1515 23.0732 16.5508 25 12.5 25C5.59644 25 0 19.4036 0 12.5C0 5.59644 5.59644 0 12.5 0C16.5508 0 20.1515 1.9268 22.4357 4.9139L18.8439 7.84254C17.2872 6.09824 15.0219 5 12.5 5C7.80558 5 5 7.80558 5 12.5C5 17.1944 7.80558 20 12.5 20C15.0219 20 17.2872 18.9018 18.8439 17.1575L22.4357 20.0861Z\" fill=\"currentColor\"/>\n</svg>');
+		Lampa.Template.add('modss_style', "<style>.program-body .notice__left{width:15em!important;} .program-body .notice__img{padding-bottom: 57% !important;} @media screen and (max-width:2560px){.epg--img{width:10em;}}@media screen and (max-width:420px){.program-body .notice--card{display:block} .program-body .notice__left{float:left;width:32em!important}.program-body .notice__body{float:left;} .program-body .notice__img{padding-bottom: 56% !important;}} .mods_iptv__program{padding:0 1em}.iptv-list{padding:1.5em;display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-pack:center;-webkit-justify-content:center;-moz-box-pack:center;-ms-flex-pack:center;justify-content:center;-webkit-box-orient:vertical;-webkit-box-direction:normal;-webkit-flex-direction:column;-moz-box-orient:vertical;-moz-box-direction:normal;-ms-flex-direction:column;flex-direction:column;padding-bottom:1em}.iptv-list__ico{width:4.5em;margin-bottom:2em;height:4.5em}.iptv-list__ico>svg{width:4.5em;height:4.5em}.iptv-list__title{font-size:1.9em;margin-bottom:1em}.iptv-list__items{width:80%;margin:0 auto}.iptv-list__items .scroll{height:22em}.iptv-list__item{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;padding:1em;background-color:rgba(255,255,255,0.1);font-size:1.3em;line-height:1.3;-webkit-border-radius:.3em;-moz-border-radius:.3em;border-radius:.3em;margin:1em}.iptv-list__item-name{width:40%;padding-right:1em;overflow:hidden;-o-text-overflow:ellipsis;text-overflow:ellipsis;white-space:nowrap;text-align:left}.iptv-list__item-url{width:60%;padding-left:1em;overflow:hidden;-o-text-overflow:ellipsis;text-overflow:ellipsis;white-space:nowrap;text-align:right}.iptv-list__item.focus{background-color:#fff;color:black}@media screen and (max-width: 585px) {.timeline{bottom:12em}.card--new_seria {right:2em!important;bottom:10em!important} .card--last_viewD{right:80%!important;top:2em!important}}</style>");
+		
+		Lampa.Template.add('hdgo_item', '<div class="selector hdgo-item"><div class="hdgo-item__imgbox"><img class="hdgo-item__img"/><div class="card__icons"><div class="card__icons-inner"></div></div></div><div class="hdgo-item__name">{title}</div></div>');
+		Lampa.Template.add('hdgo_style', '<style>.last--focus .hdgo-item__imgbox::after {content: "";position: absolute;top: -0.4em;left: -0.4em;right: -0.4em;bottom: -0.4em;border: .3em solid red;-webkit-border-radius: .8em;-moz-border-radius: .8em;border-radius: .8em;opacity: .4}.modss-channel__name {padding:20px;text-align: center;font-size: 1.2em}.forktv.focus .hdgo-item__imgbox::after, .modss__tv.focus .hdgo-item__imgbox::after {opacity: 1}.nuamtv {filter: blur(7px);}.nuamtv:hover, .nuamtv:action {filter: blur(0px);}.a-r.b{color:#fff;background: linear-gradient(to right, rgba(204,0,0,1) 0%,rgba(150,0,0,1) 100%);}.a-r.de{color:#fff;background: linear-gradient(to right, #ffbc54 0%,#ff5b55 100%);}.a-r.g{background: linear-gradient(to right, rgba(205,235,142,1) 0%,rgba(165,201,86,1) 100%);color: #12420D;}.card.home.focus .card__img {border-color: green!important;-webkit-box-shadow: 0 0 0 0.4em green!important;-moz-box-shadow: 0 0 0 0.4em green!important;box-shadow: 0 0 0 0.4em green!important;}@media screen and (max-width: 2560px) {.pc.hdgo.card--collection,.pc.card--collection{width:11em!important} .tv_tv{width:12.5%!important}.tv_tv_c{width:20%!important}.tv_pc{width:16.66%!important}.tv.hdgo.card--collection{width:10.3em!important} .tv.card--collection{width:14.2%!important}.tv.sort.card--collection{width:25%!important}.tv.sort.hdgo.card--collection{width:25%!important}  .sort.hdgo.card--collection .card__view {padding-bottom:25%!important} .tv.two.sort.card--collection .card__view {padding-bottom: 10%!important} .tv.two.sort.card--collection{height:20%!important;width:50%!important}.pc.card--category, .tv.card--category{width:14.28%}.nuam.card--collection{width:20%!important}}  @media screen and (max-width: 1380px) {.pc.card--collection,.mobile,.mobile_tv{width:16.6%!important} .tv_pc{width:14.28%!important} .tv_pc_c{width:14.28%!important} .tv_tv{width:14.28%!important} .pc.hdgo.card--collection,.hdgo.card--collection{width:10em!important}.sort.pc.card--collection{width:25%!important}.sort.hdgo.card--collection{width:25%!important} .sort.hdgo.card--collection .card__view {padding-bottom:40%!important} .two.sort.card--collection{width:50%!important} .pc.two.sort.card--collection .card__view {padding-bottom: 33%!important} .pc.card--category,.nuam.card--category{width:11.5em!important}}  @media screen and (max-width: 420px) {.pc.card--collection,.mobile{width:10.3em!important}.mobile_tv{width:33.3%!important}  .pc.hdgo.card--collection,.hdgo.card--collection{width:10em!important}.pc.card--category,.nuam.card--category{width:7.9em!important}.nuam.card--collection{width:33.3%!important}.sort.hdgo.card--collection .card__view {padding-bottom:60%!important}}   .searc.card--collection .card__view {padding-bottom: 5%!important}.searc.card--collection{width:100%!important}.searc.card--collection .card__img{height:100%!important;}.hdgo-item{margin:0 .3em;width:10.4em;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0}.hdgo-item__imgbox{background-color:#3e3e3e;padding-bottom:60%;position:relative;-webkit-border-radius:.3em;-moz-border-radius:.3em;border-radius:.3em}.hdgo-item__img{position:absolute;top:0;left:0;width:100%;height:100%}.hdgo-item__name{font-size:1.1em;margin-top:.8em}.hdgo-item.focus .hdgo-item__imgbox::after{content:"";display:block;position:absolute;left:-.4em;top:-.4em;right:-.4em;bottom:-.4em;-border: .2em solid red;opacity:.6;-webkit-border-radius: .8em;-moz-border-radius: .8em;border-radius: .8em}.hdgo-item +.hdgo-item{margin:0 .3em}.modss_tv .items-line + .items-line, .forktv .items-line + .items-line {margin-top:0!important;}</style>');
+		Lampa.Template.add('mods_radio_style', "<style>.blink2{-webkit-animation:blink2 1.5s linear infinite;animation:blink2 1.5s linear infinite}@-webkit-keyframes blink2{100%{color:rgba(34,34,34,0)}}@keyframes blink2{100%{color:rgba(34,34,34,0)}}.controll,.controll *{box-sizing:content-box;letter-spacing:0;}.controll{position:relative;transition:.5s linear;border:.3em solid #fff;background-color:#fff;border-radius:50%;bottom:4.19em;float:right;right:0;padding:1.7em;width:.2em;height:.2em;white-space:nowrap;text-align:center;cursor:pointer}.controll.pause{background-color:#353434;border-color:#3b6531}.controll,.controll .but_left,.controll .but_right,.controll:before{display:inline-block}.controll.pause .but_left,.controll.pause .but_right{margin-left:-8px;margin-top:-8px;border-left:8px solid #fff;border-top:0 solid transparent;border-bottom:0 solid transparent;height:18px}.controll.pause .but_left{border-right:10px solid transparent}.controll.play .but_right{margin-left:-5px;margin-top:-9px;border-left:15px solid #525252;border-top:10px solid transparent;border-bottom:10px solid transparent}.controll:hover,.controll.focus{background-color:#fff}.controll.play.focus{border-color:#8a8a8a}.controll.focus .but_left,.controll.focus .but_right,.controll:hover .but_left,.controll:hover .but_right{border-left-color:#252525}.Radio_n .card__view {padding-bottom: 75%!important;}.stbut,.stbut *{box-sizing:content-box;letter-spacing:0}.title_plaing{position:absolute;text-align:center;width:15em;margin-top:-1.2em;font-size:1.1em}.stbut{transition:.5s linear;border:.15em solid #fbfbfb;background-color:#000;border-radius:4em;margin-top:1em;padding:0.3em 4em 0em 0.5em;font-size:2em;cursor:pointer;height:1.5em;max-width:4em}.stbut:hover, .stbut.focus{background-color:#edebef;color:#616060;border-color:#8e8e8e}</style>");
+		Lampa.Template.add('info_radio', '<div style="height:8em" class="radio_r info layer--width"><div class="info__left"><div style="margin-top:25px" class="info__title"></div><div class="info__create"></div></div><div style="display:block" class="info__right"> <b class="title_plaing"></b>   <div id="stantion_filtr"><div id="stbut" class="stbut selector"><b>СТАНЦИИ</b></div></div>    <div id="player_radio"><div id="plbut" class="controll selector play"><span class="but_left"></span><span class="but_right"></span></div></div></div></div>');
+		Lampa.Template.add('mods_iptv_details', '<div class="mods_iptv-details"><div class="mods_epg-load" style="display:none;margin-bottom:-2em;position:relative"><div class="broadcast__text">' + Lampa.Lang.translate('search_searching') + '</div><div class="broadcast__scan"><div></div></div></div><div class="mods_iptv__program"></div></div>');
+		Lampa.Template.add('mods_iptv_list', "<div class=\"iptv-list layer--height\"><div class=\"iptv-list__ico\"><svg height=\"36\" viewBox=\"0 0 38 36\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">        <rect x=\"2\" y=\"8\" width=\"34\" height=\"21\" rx=\"3\" stroke=\"white\" stroke-width=\"3\"/>        <line x1=\"13.0925\" y1=\"2.34874\" x2=\"16.3487\" y2=\"6.90754\" stroke=\"white\" stroke-width=\"3\" stroke-linecap=\"round\"/><line x1=\"1.5\" y1=\"-1.5\" x2=\"9.31665\" y2=\"-1.5\" transform=\"matrix(-0.757816 0.652468 0.652468 0.757816 26.197 2)\" stroke=\"white\" stroke-width=\"3\" stroke-linecap=\"round\"/>        <line x1=\"9.5\" y1=\"34.5\" x2=\"29.5\" y2=\"34.5\" stroke=\"white\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg></div><div class=\"iptv-list__title\">#{iptv_select_playlist}</div><div class=\"iptv-list__items\"></div></div>");
+		
+		/*
+		var plugins = Lampa.Storage.get('plugins','[]');
+		plugins.forEach(function(plug) {
+			plug.url = (plug.url + '').replace('http://modss.online', 'https://lampa.stream/modss');
+		});
+		Lampa.Storage.set('plugins',plugins);
+		*/
+		
+		manifest = {
+		type: 'video',
+		version: version_modss,
+		name: "Онлайн - MODS's v" + version_modss,
+		description: 'Плагин для просмотра онлайн сериалов и фильмов',
+		component: 'modss_online',
+		onContextMenu: function onContextMenu(object) {
+			return {
+			name: Lampa.Lang.translate('online_watch'),
+			description: ''
+			};
+		},
+		onContextLauch: function onContextLauch(object) {
+			Lampa.Activity.push({
+						url: '',
+						title: Lampa.Lang.translate('modss_title_online') + " - MODS's v" + version_modss,
+						component: 'modss_online',
+						search: object.title,
+						search_one: object.title,
+						search_two: object.original_title,
+						movie: object,
+						page: 1
+					});
+		}
+		};
+    	Lampa.Manifest.plugins = manifest;
+    	if (!Lampa.Lang) {
 			var lang_data = {};
 			Lampa.Lang = {
 				add: function (data) {
@@ -7088,7 +7137,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         uk: 'Сервер не відповідає на запит.',
         en: 'Server does not respond to the request.',
         zh: '服务器未响应请求。'
-      },
+      }, 
       modss_balanser_dont_work_from: {
         ru: ' на балансере <b>{balanser}</b>',
         uk: ' на балансері <b>{balanser}</b>',
@@ -7477,58 +7526,58 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 			  jackets[el] = el.replace(/_/g,'.');
 			});
 			var params = Lampa.SettingsApi.getParam('parser')
-      if(params){
-         var param = params.find(function (p){
-           return p.param.name == 'jackett_url2';
-         });
-        if(param) Lampa.Arrays.remove(params, param);
-      }
-      Lampa.SettingsApi.addParam({
+			if(params){
+				var param = params.find(function (p){
+				return p.param.name == 'jackett_url2';
+				});
+				if(param) Lampa.Arrays.remove(params, param);
+			}
+      		Lampa.SettingsApi.addParam({
 				component: 'parser',
 				param: {
-					name: 'jackett_url2',
-					type: 'select',
+					name: 'jackett_url2', 
+					type: 'select', 			
 					values: jackets,
-					default: 'jacred_ru'
+					default: 'jacred_ru'				
 				},
 				field: {
-					name: 'Публичные JACKett Ⓜ️',
-					description: 'Обновится после выхода из настроек'
+					name: 'Публичные JACKett Ⓜ️', 			
+					description: 'Обновится после выхода из настроек' 
 				},
-				onChange: function (value) {
+				onChange: function (value) { 	
 					Lampa.Storage.set('jackett_url', Modss.jack[value].url);
 					Lampa.Storage.set('jackett_key', Modss.jack[value].key);
 					Lampa.Storage.set('jackett_interview',Modss.jack[value].interv);
 					Lampa.Storage.set('parse_in_search', false);
 					Lampa.Storage.set('parse_lang', Modss.jack[value].lang);
-					Lampa.Settings.update();
+					Lampa.Settings.update();							
 			 	},
-			  onRender: function (item) {
-			    setTimeout(function() {
-		        $('div[data-children="parser"]').on('hover:enter', function(){
-				  		Lampa.Settings.update();
-				    });
-				    if(!API || !API.length) window.location.reload();
-				    $('[data-name="jackett_url2"]').on('hover:enter', function (el){
-  		        Lampa.Select.render().find('.selectbox-item__title').map(function(i, item){
-  		          Modss.check($(item).text().toLowerCase().replace(/\./g,'_'), function(e){
-  		            $(item).css('color', e ? '#23ff00' : '#d10000');
-  		          });
-  		        });
-    		    });
-				    if(Lampa.Storage.field('parser_use')) {
-  				    item.show();
-  				    if(Boolean(Modss.jack[Lampa.Storage.get('jackett_url2')])) $('.settings-param__name', item).before('<div class="settings-param__status one '+(Modss.jack[Lampa.Storage.get('jackett_url2')].ok ? "active" : "error")+'"></div>');
-  			      $('[data-name="jackett_url"] .settings-param__name').before('<div class="settings-param__status wait act"></div>');
-  			      $('.settings-param__name', item).css('color','#f3d900');
-  				    $('div[data-name="jackett_url2"]').insertAfter('div[data-children="parser"]');
-  				    Modss.check($('.settings-param__value', item).text().toLowerCase().replace(/\./g,'_'), function(e){
-  			        Modss.check(Lampa.Storage.get('jackett_url'));
-                $($('.settings-param__status', item)).removeClass('active error wait').addClass(e ? 'active' : 'error');
-              });
-				    } else item.hide();
-          }, 50);
-   	    }
+				onRender: function (item) {
+					setTimeout(function() {
+						$('div[data-children="parser"]').on('hover:enter', function(){
+							Lampa.Settings.update();							
+						});
+						if(!API || !API.length) window.location.reload();
+						$('[data-name="jackett_url2"]').on('hover:enter', function (el){
+							Lampa.Select.render().find('.selectbox-item__title').map(function(i, item){
+								Modss.check($(item).text().toLowerCase().replace(/\./g,'_'), function(e){
+									$(item).css('color', e ? '#23ff00' : '#d10000');
+								});
+							});
+						});
+						if(Lampa.Storage.field('parser_use')) {
+							item.show();
+							if(Boolean(Modss.jack[Lampa.Storage.get('jackett_url2')])) $('.settings-param__name', item).before('<div class="settings-param__status one '+(Modss.jack[Lampa.Storage.get('jackett_url2')].ok ? "active" : "error")+'"></div>');
+							$('[data-name="jackett_url"] .settings-param__name').before('<div class="settings-param__status wait act"></div>');
+							$('.settings-param__name', item).css('color','#f3d900');
+							$('div[data-name="jackett_url2"]').insertAfter('div[data-children="parser"]');
+							Modss.check($('.settings-param__value', item).text().toLowerCase().replace(/\./g,'_'), function(e){
+								Modss.check(Lampa.Storage.get('jackett_url'));
+								$($('.settings-param__status', item)).removeClass('active error wait').addClass(e ? 'active' : 'error');
+							});
+						} else item.hide();
+					}, 50);
+				}
 			});
 		}
 		Lampa.Listener.follow('full', function (e) {
@@ -7537,7 +7586,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 				Modss.serialInfo(e.data.movie);
 				Modss.online();
 				Modss.rating_kp_imdb(e.data.movie).then(function (e) {
-
+				  
 				})['catch'](function(e){
 				  {START_PRELOAD}
 				});
@@ -7545,16 +7594,16 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 				$('.view--trailer').empty().append("<svg enable-background='new 0 0 512 512' id='Layer_1' version='1.1' viewBox='0 0 512 512' xml:space='preserve' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'><g><path fill='currentColor' d='M260.4,449c-57.1-1.8-111.4-3.2-165.7-5.3c-11.7-0.5-23.6-2.3-35-5c-21.4-5-36.2-17.9-43.8-39c-6.1-17-8.3-34.5-9.9-52.3   C2.5,305.6,2.5,263.8,4.2,222c1-23.6,1.6-47.4,7.9-70.3c3.8-13.7,8.4-27.1,19.5-37c11.7-10.5,25.4-16.8,41-17.5   c42.8-2.1,85.5-4.7,128.3-5.1c57.6-0.6,115.3,0.2,172.9,1.3c24.9,0.5,50,1.8,74.7,5c22.6,3,39.5,15.6,48.5,37.6   c6.9,16.9,9.5,34.6,11,52.6c3.9,45.1,4,90.2,1.8,135.3c-1.1,22.9-2.2,45.9-8.7,68.2c-7.4,25.6-23.1,42.5-49.3,48.3   c-10.2,2.2-20.8,3-31.2,3.4C366.2,445.7,311.9,447.4,260.4,449z M205.1,335.3c45.6-23.6,90.7-47,136.7-70.9   c-45.9-24-91-47.5-136.7-71.4C205.1,240.7,205.1,287.6,205.1,335.3z'/></g></svg><span>" + Lampa.Lang.translate('full_trailers') + "</span>");
 			}
 		});
-		Lampa.Listener.follow('activity', function (e) {
-      if (e.component == 'full' && e.type == 'start') {
-        var button = Lampa.Activity.active().activity.render().find('.view--modss_online');
-       if(button.length){
-         cards = e.object.card;
-		  	 Modss.online(button);
-				 Modss.last_view(e.object.card);
-       }
-     }
-    });
+		Lampa.Listener.follow('activity', function (e) { 
+			if (e.component == 'full' && e.type == 'start') { 
+				var button = Lampa.Activity.active().activity.render().find('.view--modss_online');
+				if(button.length){
+					cards = e.object.card;
+					Modss.online(button);
+					Modss.last_view(e.object.card);
+				}
+			} 
+		});
 		Lampa.Storage.listener.follow('change', function (e) {
 		  //if(e.name == 'jackett_key' || e.name == 'jackett_url') Modss.check(e.value);
 		});
@@ -7634,17 +7683,17 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 			if (e.name == 'parser') FreeJaketOpt();
 		});
 		if (Lampa.Manifest.app_digital >= 177) {
-      Lampa.Storage.sync('my_col', 'object_object');
-      Lampa.Storage.sync('fav_chns', 'object_object');
-      Lampa.Storage.sync('online_watched_last', 'object_object');
-      var balansers_sync = ["filmix", "kinobase", "hdrezka", "rezka", "videocdn", "videodb", "collaps", "hdvb", "kodik", "uakino", "kinotochka", "cdnmovies", "anilibria", "videoapi", "bazon", "pub"];
-      balansers_sync.forEach(function (name) {
-        Lampa.Storage.sync('online_choice_' + name, 'object_object');
-      });
-    }
+			Lampa.Storage.sync('my_col', 'object_object');
+			Lampa.Storage.sync('fav_chns', 'object_object');
+			Lampa.Storage.sync('online_watched_last', 'object_object');
+			var balansers_sync = ["filmix", "kinobase", "hdrezka", "rezka", "videocdn", "videodb", "collaps", "hdvb", "kodik", "uakino", "kinotochka", "cdnmovies", "anilibria", "videoapi", "bazon", "pub"];
+			balansers_sync.forEach(function (name) {
+				Lampa.Storage.sync('online_choice_' + name, 'object_object');
+			});
+		}
 		function add() {
-      Modss.init();
-      $('body').append(Lampa.Template.get('hdgo_style', {}, true));
+			Modss.init();
+			$('body').append(Lampa.Template.get('hdgo_style', {}, true));
 			$('body').append(Lampa.Template.get('mods_radio_style', {}, true));
 			$('body').append(Lampa.Template.get('modss_style', {}, true));
 			$('body').append(Lampa.Template.get('modss_online_css', {}, true));
@@ -7668,7 +7717,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					description: 'Для активации <b style="color: #ffd402;">Vip</b> статуса перейдите в телеграм бот <span style="color: #24b4f9;">@modssmy_bot</span><br>По вопросам <span style="color: #24b4f9;">@modss_group</span>'
 				}
 			});
-
+			
       Lampa.SettingsApi.addParam({
 				component: 'settings_modss',
 				param: {
@@ -7757,8 +7806,8 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					item.on('hover:enter', function () {
 						Lampa.Settings.create('modss_online_param');
 						Lampa.Controller.enabled().controller.back = function(){
-         		  Lampa.Settings.create('settings_modss');
-            }
+							Lampa.Settings.create('settings_modss');
+						}
 					});
 				}
 			});
@@ -7775,9 +7824,9 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					description: Lampa.Lang.translate('title_prioriry_balanser_descr')
 				},
 				onRender: function (item) {
-					if (Lampa.Storage.field('mods_onl')) item.show();
+					if (Lampa.Storage.field('mods_onl')) item.show(); 
 					else item.hide();
-				},
+				}, 
 				onChange: function (values) {
 				  var title = $('body').find('[data-name="priority_balanser"] .settings-param__value');
 			    title.text(title.text().split('<').shift());
@@ -7797,7 +7846,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					Lampa.Storage.set('full_btn_priority', '');
 				},
 				onRender: function (item) {
-					if (Lampa.Storage.field('mods_onl')) item.show();
+					if (Lampa.Storage.field('mods_onl')) item.show(); 
 					else item.hide();
 				}
 			});
@@ -7813,7 +7862,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					description: Lampa.Lang.translate('title_online_descr')
 				},
 				onRender: function (item) {
-					if (Lampa.Storage.field('mods_onl')) item.show();
+					if (Lampa.Storage.field('mods_onl')) item.show(); 
 					else item.hide();
 				}
 			});
@@ -7825,11 +7874,11 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					default: false
 				},
 				field: {
-					name: Lampa.Lang.translate('online_dash'),
+					name: Lampa.Lang.translate('online_dash'), 
 					description: Lampa.Lang.translate('modss_balanser') + ' Collaps'
 				},
 				onRender: function (item) {
-					if (Lampa.Storage.field('mods_onl')) item.show();
+					if (Lampa.Storage.field('mods_onl')) item.show(); 
 					else item.hide();
 				}
 			});
@@ -7855,8 +7904,8 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					item.on('hover:enter', function () {
 						Lampa.Settings.create('filmix_param');
 						Lampa.Controller.enabled().controller.back = function(){
-         		  Lampa.Settings.create('modss_online_param');
-            }
+							Lampa.Settings.create('modss_online_param');
+						}
 					});
 				}
 			});
@@ -8069,7 +8118,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
     		}
     	});
 
-      Lampa.SettingsApi.addParam({
+      		Lampa.SettingsApi.addParam({
 				component: 'settings_modss',
 				param: {
 					name: 'mods_title',
@@ -8080,7 +8129,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					name: Lampa.Lang.translate('title_addons')
 				}
 			});
-
+      		
 			//ForkTV
 			Lampa.SettingsApi.addParam({
 				component: 'settings_modss',
@@ -8118,8 +8167,8 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					item.on('hover:enter', function () {
 						Lampa.Settings.create('fork_param');
 						Lampa.Controller.enabled().controller.back = function(){
-         		  Lampa.Settings.create('settings_modss');
-            }
+							Lampa.Settings.create('settings_modss');
+						}
 					});
 				}
 			});
@@ -8392,8 +8441,8 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					}
 				});
 			});
-
-			//Close_app
+			
+			//Close_app 
 			if (Lampa.Platform.is('android')) {
 				Lampa.SettingsApi.addComponent({
 					component: 'mods_exit',
@@ -8417,14 +8466,14 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 			}
 			FreeJaketOpt();
 		}
-
+		
 		if (window.appready) add();else {
-      Lampa.Listener.follow('app', function (e) {
-        if (e.type == 'ready') add();
-      });
-    }
-
-    function url$1(u) {
+			Lampa.Listener.follow('app', function (e) {
+				if (e.type == 'ready') add();
+			});
+    	}
+		
+		function url$1(u) {
 			var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 			if (params.genres) u = add$4(u, 'genre=' + params.genres);
 			if (params.page) u = add$4(u, 'page=' + params.page);
@@ -8657,7 +8706,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					original_title: element.title.split('/')[1] ? element.title.split('/')[1] : element.title.split('/')[0],
 					name: element.seasons ? element.title.split('/')[0] : '',
 					original_name: element.seasons ? element.title.split('/')[1] : '',
-					original_language: element.genres.find(function (e){return e.id == 25}) !== undefined ? 'ja' : '',
+					original_language: element.genres.find(function (e){return e.id == 25}) !== undefined ? 'ja' : '', 
 					overview: element.plot.replace(/\[n|r|t]/g, ''),
 					img: element.posters.big,
 					runtime: (element.duration.average || 0) / 1000 / 6 * 100,
@@ -8673,7 +8722,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					release_date: element.year || Lampa.Utils.parseTime(element.created_at).full || '0000',
 					number_of_seasons: seasonsCount(element).seasons,
 					number_of_episodes: seasonsCount(element).episodes,
-					first_air_date: element.type == 'serial' || element.type == 'docuserial' || element.type == 'tvshow' ? element.year || Lampa.Utils.parseTime(element.created_at).full || '0000' : '',
+					first_air_date: element.type == 'serial' || element.type == 'docuserial' || element.type == 'tvshow' ? element.year || Lampa.Utils.parseTime(element.created_at).full || '0000' : '', 
 					background_image: element.posters.wide,
           imdb_rating: parseFloat(element.imdb_rating || '0.0').toFixed(1),
           kp_rating: parseFloat(element.kinopoisk_rating || '0.0').toFixed(1),
@@ -8746,7 +8795,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					data.credits = {
 						movie: similars,
 						knownFor: [{
-						  name: '',
+						  name: '', 
 						  credits: similars
 						}]
 					};
@@ -8774,9 +8823,10 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 			var data = [];
 			if (element.trailer) {
 				data.push({
-					name: element.trailer.title,
+					name: element.trailer.title  || 'Trailer name',
 					url: element.trailer.url,
-					player: true
+					youtube: false,
+					iso_639_1: 'ru'
 				});
 			}
 			return data.length ? {
@@ -8898,8 +8948,8 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 			discovery: discovery
 		};
 		Lampa.Api.sources.pub = PUB;
-
-    function url$2(u) {
+		
+		function url$2(u) {
 			var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 			u = (u == 'undefined' ? '' : u)
 			if (params.genres) u = 'catalog' +add$5(u, 'orderby=date&orderdir=desc&filter=s996-' + params.genres.replace('f','g'));
@@ -8972,25 +9022,25 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 		    title: 'title_now_watch',
 		    url: 'top_views'
 		  }, {
-		    title: 'title_new',
+		    title: 'title_new', 
 		    url: 'catalog?orderby=date&orderdir=desc'
 		  }, {
-		    title: 'title_new_this_year',
+		    title: 'title_new_this_year', 
 		    url: 'catalog?orderby=year&orderdir=desc'
 		  }, {
-		    title: 'pub_title_newfilm',
+		    title: 'pub_title_newfilm', 
 		    url: 'catalog?orderby=date&orderdir=desc&filter=s0'
 		  }, {
-		    title: '4K',
+		    title: '4K', 
 		    url: 'catalog?orderby=date&orderdir=desc&filter=s0-q4'
 		  }, {
-		    title: 'pub_title_popularfilm',
+		    title: 'pub_title_popularfilm', 
 		    url: 'popular'
 		  }, {
-		    title: 'pub_title_popularserial',
+		    title: 'pub_title_popularserial', 
 		    url: 'popular?section=7'
 		  }, {
-		    title: 'title_in_top',
+		    title: 'title_in_top', 
 		    url: 'catalog?orderby=rating&orderdir=desc'
 		  }];
 			var status = new Lampa.Status(Lampa.Arrays.getKeys(source).length);
@@ -9027,13 +9077,13 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 		    title: 'title_new_this_year',
 		    url: 'catalog?orderby=year&orderdir=desc&filter=s'+type
 		  }, {
-		    title: 'title_new',
+		    title: 'title_new', 
 		    url: 'catalog?orderby=date&orderdir=desc&filter=s'+type
 		  }, {
-		    title: 'title_popular',
+		    title: 'title_popular', 
 		    url: 'popular?section='+type
 		  }, {
-		    title: 'title_in_top',
+		    title: 'title_in_top', 
 		    url: 'catalog?orderby=rating&orderdir=desc&filter=s'+type
 		  }];
 			var status = new Lampa.Status(Lampa.Arrays.getKeys(source).length);
@@ -9075,7 +9125,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 				json.source = 'filmix';
 				var data = {};
 				var element = json;
-
+			
 				var similars = [];
 				if (json.relates) {
 					for (var i in json.relates) {
@@ -9086,7 +9136,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 						results: similars
 					});
 				}
-
+			
 				data.movie = {
 					id: element.id,
 					url: url,
@@ -9112,7 +9162,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					quality: element.rip && element.rip.split(' ').shift() || '',
 					number_of_seasons: Lampa.Arrays.getValues(element.player_links.playlist).length || '',
 					number_of_episodes: element.last_episode && element.last_episode.episode || '',
-					first_air_date: Lampa.Arrays.getValues(element.player_links.playlist).length ? element.year || element.date_atom || '0000' : '',
+					first_air_date: Lampa.Arrays.getValues(element.player_links.playlist).length ? element.year || element.date_atom || '0000' : '', 
 					background_image: element.poster,
           imdb_rating: parseFloat(element.imdb_rating || '0.0').toFixed(1),
           kp_rating: parseFloat(element.kp_rating || '0.0').toFixed(1),
@@ -9131,7 +9181,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 				}, onerror);
      		status.append('persons', persons2(json));
 				status.append('movie', data.movie);
-				status.append('videos', videos2(element.player_links));
+				status.append('videos', videos2(element.player_links));			
 			}, onerror);
 		}
 		function menu$2(params, oncomplite) {
@@ -9170,12 +9220,12 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
         { name: 'ноября', number: '11' },
         { name: 'декабря', number: '12' }
       ];
-
+    
       var parts = dateString.split(' ');
       var day = parts[0];
       var monthName = parts[1];
       var year = parts[2];
-
+      
       var monthNumber;
       for (var i = 0; i < months.length; i++) {
         if (months[i].name === monthName) {
@@ -9183,7 +9233,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
           break;
         }
       }
-
+      
       var formattedDate = year + '-' + monthNumber + '-' + day;
       return formattedDate;
     }
@@ -9208,7 +9258,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 					data.credits = {
 						movie: similars,
 						knownFor: [{
-						  name: json.career,
+						  name: json.career, 
 						  credits: similars
 						}]
 					};
@@ -9360,23 +9410,23 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 			discovery: discovery$1
 		};
 		Lampa.Api.sources.filmix = FILMIX;
-
-    function include(url) {
-      var script = document.createElement('script');
-      script.src = url;
-      document.getElementsByTagName('head')[0].appendChild(script);
-    }
-    include('https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js');
-    include('https://www.googletagmanager.com/gtag/js?id=G-8LVPC3VETR');
-    window.dataLayer = window.dataLayer || [];
-    function gtag() {
-      dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-    gtag('config', 'G-8LVPC3VETR');
-
+		
+		function include(url) {
+		var script = document.createElement('script');
+		script.src = url;
+		document.getElementsByTagName('head')[0].appendChild(script);
+		}
+		include('https://cdn.jsdelivr.net/npm/gaugeJS/dist/gauge.min.js');
+		include('https://www.googletagmanager.com/gtag/js?id=G-8LVPC3VETR');
+		window.dataLayer = window.dataLayer || [];
+		function gtag() {
+		dataLayer.push(arguments);
+		}
+		gtag('js', new Date());
+		gtag('config', 'G-8LVPC3VETR');
+		
 		function guide() {
-			var guide = '<div class="setorrent-checklist"><div class="torrent-checklist__descr">Вас приветствует Guide по использованию и настройке приложения Lampa.<br> Мы пройдём с Вами краткую инструкцию по основным этапам приложения.</div><div class="torrent-checklist__progress-steps">Пройдено 0 из 0</div><div class="torrent-checklist__progress-bar"><div style="width:0"></div></div><div class="torrent-checklist__content"><div class="torrent-checklist__steps hide"><ul class="torrent-checklist__list"><li>Парсер</li><li>Включение парсера</li><li>Плагины</li><li>Добавление плагина</li><li>Установка плагина</li><li>Балансер</li><li>Смена балансера</li><li>Фильтр</li><li>Применение фильтра</li></ul></div><div class="torrent-checklist__infoS"><div class="hide">Откройте Настройки, после перейдите в раздел "Парсер".<hr><img src="'+ Lampa.Utils.protocol() +'lampa.stream/img/guide/open_parser.jpg"></div><div class="hide">В пункте "Использовать парсер" переведите функцию в положение "Да", после чего в карточке фильма или сериала появится кнопка "Торренты".<hr><img src="'+ Lampa.Utils.protocol() +'lampa.stream/img/guide/add_parser.jpg"></div><div class="hide">Установка плагинов<hr><img src="'+ Lampa.Utils.protocol() +'lampa.stream/img/guide/add_plugin.jpg"></div><div class="hide">Для добавления плагинов воспользуйтесь следующими вариантами.<hr><img src="'+ Lampa.Utils.protocol() +'lampa.stream/img/guide/options_install.jpg"></div><div class="hide">Для добавления плагина, воспользуйтесь списком плагинов<hr><img src="'+ Lampa.Utils.protocol() +'lampa.stream/img/guide/install_plugin.jpg"></div><div class="hide">Для смены "Онлайн" источника, воспользуйтесь кнопкой Балансер.<hr><img src="'+ Lampa.Utils.protocol() +'lampa.stream/img/guide/open_balanser.jpg"></div><div class="hide">В случае, если источник не работает (нет подключения к сети) выберете в разделе "Балансер" другой источник.<hr><img src="'+ Lampa.Utils.protocol() +'lampa.stream/img/guide/balansers_change.jpg"></div><div class="hide">Используйте "Фильтры" для смены перевода и сезона.<hr><img src="'+ Lampa.Utils.protocol() +'lampa.stream/img/guide/open_filter.jpg"></div><div class="hide">Для смены сезона или озвучки воспользуйтесь пунктами<br>1. Перевод<br>2. Сезон<hr><img src="'+Lampa.Utils.protocol() +'lampa.stream/img/guide/filters.jpg"></div><div class="hide">Поздравляем! После прохождения краткого гайда, Вы знаете как пользоваться приложением и у Вас должно возникать меньше вопросов</div></div></div><div class="torrent-checklist__footer"><div class="simple-button selector hide back">Назад</div><div class="simple-button selector next">Начать</div><div class="torrent-checklist__next-step"></div></div></div>';
+			var guide = '<div class="setorrent-checklist"><div class="torrent-checklist__descr">Вас приветствует Guide по использованию и настройке приложения Lampa.<br> Мы пройдём с Вами краткую инструкцию по основным этапам приложения.</div><div class="torrent-checklist__progress-steps">Пройдено 0 из 0</div><div class="torrent-checklist__progress-bar"><div style="width:0"></div></div><div class="torrent-checklist__content"><div class="torrent-checklist__steps hide"><ul class="torrent-checklist__list"><li>Парсер</li><li>Включение парсера</li><li>Плагины</li><li>Добавление плагина</li><li>Установка плагина</li><li>Балансер</li><li>Смена балансера</li><li>Фильтр</li><li>Применение фильтра</li></ul></div><div class="torrent-checklist__infoS"><div class="hide">Откройте Настройки, после перейдите в раздел "Парсер".<hr><img src="'+ Protocol() +'lampa.stream/img/guide/open_parser.jpg"></div><div class="hide">В пункте "Использовать парсер" переведите функцию в положение "Да", после чего в карточке фильма или сериала появится кнопка "Торренты".<hr><img src="'+ Protocol() +'lampa.stream/img/guide/add_parser.jpg"></div><div class="hide">Установка плагинов<hr><img src="'+ Protocol() +'lampa.stream/img/guide/add_plugin.jpg"></div><div class="hide">Для добавления плагинов воспользуйтесь следующими вариантами.<hr><img src="'+ Protocol() +'lampa.stream/img/guide/options_install.jpg"></div><div class="hide">Для добавления плагина, воспользуйтесь списком плагинов<hr><img src="'+ Protocol() +'lampa.stream/img/guide/install_plugin.jpg"></div><div class="hide">Для смены "Онлайн" источника, воспользуйтесь кнопкой Балансер.<hr><img src="'+ Protocol() +'lampa.stream/img/guide/open_balanser.jpg"></div><div class="hide">В случае, если источник не работает (нет подключения к сети) выберете в разделе "Балансер" другой источник.<hr><img src="'+ Protocol() +'lampa.stream/img/guide/balansers_change.jpg"></div><div class="hide">Используйте "Фильтры" для смены перевода и сезона.<hr><img src="'+ Protocol() +'lampa.stream/img/guide/open_filter.jpg"></div><div class="hide">Для смены сезона или озвучки воспользуйтесь пунктами<br>1. Перевод<br>2. Сезон<hr><img src="'+Protocol() +'lampa.stream/img/guide/filters.jpg"></div><div class="hide">Поздравляем! После прохождения краткого гайда, Вы знаете как пользоваться приложением и у Вас должно возникать меньше вопросов</div></div></div><div class="torrent-checklist__footer"><div class="simple-button selector hide back">Назад</div><div class="simple-button selector next">Начать</div><div class="torrent-checklist__next-step"></div></div></div>';
 			Lampa.Template.add('guide', guide);
 			var temp = Lampa.Template.get('guide');
 			var descr = temp.find('.torrent-checklist__descr');
@@ -9429,7 +9479,7 @@ Date.now||(Date.now=function(){return(new Date.getTime())}),function(){"use stri
 				mask: true
 			});
 		}
-
+		
 	}
 	if (!window.plugin_modss) startPlugin();
 
